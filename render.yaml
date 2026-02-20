@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: anikai-web
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: ANILIST_REDIRECT_URI
+        sync: false
+      - key: ANILIST_CLIENT_ID
+        sync: false
+      - key: ANILIST_CLIENT_SECRET
+        sync: false
+      - key: SEANIME_BASE_URL
+        sync: false
+      - key: SEANIME_BASE_URLS
+        sync: false
+      - key: SEANIME_TIMEOUT_MS
+        value: "12000"
