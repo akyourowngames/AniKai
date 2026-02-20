@@ -24,6 +24,38 @@ function convertSrtToVtt(text) {
   return withWebVtt.replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2');
 }
 
+function rewriteM3u8ToProxy(manifestText, baseUrl, provider) {
+  const toProxyUrl = (rawUrl) => {
+    let absolute;
+    try {
+      absolute = new URL(String(rawUrl || '').trim(), baseUrl).toString();
+    } catch (_) {
+      return rawUrl;
+    }
+    return `/api/onlinestream/proxy?provider=${encodeURIComponent(provider)}&url=${encodeURIComponent(absolute)}`;
+  };
+
+  const lines = String(manifestText || '').split(/\r?\n/);
+  return lines
+    .map((line) => {
+      const raw = String(line || '').trim();
+      if (!raw) {
+        return line;
+      }
+
+      if (raw.startsWith('#')) {
+        if (!raw.includes('URI="')) return line;
+        return line.replace(/URI="([^"]+)"/g, (_m, uri) => `URI="${toProxyUrl(uri)}"`);
+      }
+
+      if (raw.startsWith('data:')) {
+        return line;
+      }
+      return toProxyUrl(raw);
+    })
+    .join('\n');
+}
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -467,6 +499,7 @@ app.post('/api/onlinestream/episode-source', async (req, res) => {
   const episodeNumber = Number(req.body?.episodeNumber);
   const source = String(req.body?.source || 'anilist').toLowerCase();
   const dubbed = Boolean(req.body?.dubbed);
+  const server = String(req.body?.server || '').trim();
   const providerId = String(req.body?.provider || 'seanime').toLowerCase();
   const seaProvider = String(req.body?.seaProvider || '').trim();
   const seaProviders = Array.isArray(req.body?.seaProviders)
@@ -489,11 +522,32 @@ app.post('/api/onlinestream/episode-source', async (req, res) => {
       anime,
       mediaId,
       episodeNumber,
+      server,
       source,
       dubbed,
       seaProvider,
       seaProviders
     });
+
+    if (Array.isArray(payload?.videoSources)) {
+      payload.videoSources = payload.videoSources.map((item) => {
+        const sourceUrl = String(item?.url || '').trim();
+        if (!sourceUrl) {
+          return item;
+        }
+        const sourceType = String(item?.type || '').toLowerCase();
+        const isEmbeddable = sourceType === 'embed' || sourceType === 'youtube';
+        const needsProxy = !isEmbeddable && (provider.id === 'animesaturn' || provider.id === 'anicrush' || provider.id === 'hianime' || Boolean(item?.headers));
+        if (!needsProxy) {
+          return item;
+        }
+        return {
+          ...item,
+          url: `/api/onlinestream/proxy?provider=${encodeURIComponent(provider.id)}&url=${encodeURIComponent(sourceUrl)}`,
+          headers: undefined
+        };
+      });
+    }
 
     return res.json({
       provider: { id: provider.id, name: provider.name },
@@ -509,6 +563,7 @@ app.post('/api/onlinestream/debug', async (req, res) => {
   const episodeNumber = Number(req.body?.episodeNumber || 1);
   const source = String(req.body?.source || 'anilist').toLowerCase();
   const dubbed = Boolean(req.body?.dubbed);
+  const server = String(req.body?.server || '').trim();
   const providerId = String(req.body?.provider || 'seanime').toLowerCase();
   const seaProvider = String(req.body?.seaProvider || '').trim();
   const seaProviders = Array.isArray(req.body?.seaProviders)
@@ -531,6 +586,7 @@ app.post('/api/onlinestream/debug', async (req, res) => {
       anime,
       mediaId,
       episodeNumber,
+      server,
       source,
       dubbed,
       seaProvider,
@@ -547,12 +603,108 @@ app.post('/api/onlinestream/debug', async (req, res) => {
         titleEnglish: anime.titleEnglish || null
       },
       provider: provider.id,
-      requested: { mediaId, episodeNumber, source, dubbed, seaProvider, seaProviders },
+      requested: { mediaId, episodeNumber, source, dubbed, server, seaProvider, seaProviders },
       sourceCount: Array.isArray(payload?.videoSources) ? payload.videoSources.length : 0,
       servers: [...new Set((payload?.videoSources || []).map((s) => s.server).filter(Boolean))],
       debug: payload?.debug || null,
       firstSource: payload?.videoSources?.[0] || null
     });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/onlinestream/proxy', async (req, res) => {
+  const rawUrl = String(req.query.url || '').trim();
+  const provider = String(req.query.provider || '').trim().toLowerCase();
+
+  if (!rawUrl) {
+    return res.status(400).json({ error: 'Missing url' });
+  }
+
+  let target;
+  try {
+    target = new URL(rawUrl);
+  } catch (_) {
+    return res.status(400).json({ error: 'Invalid url' });
+  }
+
+  if (!['http:', 'https:'].includes(target.protocol)) {
+    return res.status(400).json({ error: 'Unsupported protocol' });
+  }
+
+  const requestHeaders = {
+    Accept: '*/*',
+    'User-Agent':
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36'
+  };
+
+  if (provider === 'animesaturn') {
+    requestHeaders.Referer = 'https://www.animesaturn.cx/';
+    requestHeaders.Origin = 'https://www.animesaturn.cx';
+  } else if (provider === 'anicrush') {
+    requestHeaders.Referer = 'https://megacloud.club/';
+    requestHeaders.Origin = 'https://megacloud.club';
+  } else if (provider === 'hianime') {
+    requestHeaders.Referer = 'https://megacloud.club/';
+    requestHeaders.Origin = 'https://megacloud.club';
+  }
+
+  const range = String(req.headers.range || '').trim();
+  if (range) {
+    requestHeaders.Range = range;
+  }
+
+  try {
+    const upstream = await fetch(target.toString(), {
+      method: 'GET',
+      headers: requestHeaders
+    });
+
+    if (!upstream.ok && upstream.status !== 206) {
+      const text = await upstream.text().catch(() => '');
+      return res.status(upstream.status).send(text || `Proxy upstream failed (${upstream.status})`);
+    }
+
+    const contentType = String(upstream.headers.get('content-type') || '').toLowerCase();
+    const isM3u8 = contentType.includes('mpegurl') || /\.m3u8($|\?)/i.test(target.pathname);
+
+    const passthroughHeaders = [
+      'content-type',
+      'content-length',
+      'content-range',
+      'accept-ranges',
+      'cache-control',
+      'etag',
+      'last-modified'
+    ];
+
+    passthroughHeaders.forEach((name) => {
+      const value = upstream.headers.get(name);
+      if (value) {
+        res.setHeader(name, value);
+      }
+    });
+
+    res.status(upstream.status);
+    if (isM3u8) {
+      res.removeHeader('content-length');
+      const body = await upstream.text();
+      const rewritten = rewriteM3u8ToProxy(body, target.toString(), provider);
+      return res.send(rewritten);
+    }
+
+    if (!upstream.body) {
+      return res.end();
+    }
+
+    const reader = upstream.body.getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      res.write(Buffer.from(value));
+    }
+    return res.end();
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

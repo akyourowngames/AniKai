@@ -1,13 +1,13 @@
-const demoProvider = require('./demo');
-const consumetProvider = require('./consumet');
-const aniembedProvider = require('./aniembed');
 const seanimeProvider = require('./seanime');
+const animesaturnProvider = require('./animesaturn');
+const anicrushProvider = require('./anicrush');
+const hianimeProvider = require('./hianime');
 
 const providers = new Map([
   [seanimeProvider.id, seanimeProvider],
-  [aniembedProvider.id, aniembedProvider],
-  [consumetProvider.id, consumetProvider],
-  [demoProvider.id, demoProvider]
+  [anicrushProvider.id, anicrushProvider],
+  [animesaturnProvider.id, animesaturnProvider],
+  [hianimeProvider.id, hianimeProvider]
 ]);
 
 function listProviders() {
