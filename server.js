@@ -30,6 +30,11 @@ function getAnilistOAuthConfig() {
 }
 
 async function getSavedAnilistToken() {
+  const envToken = String(process.env.ANILIST_TOKEN || '').trim();
+  if (envToken) {
+    return envToken;
+  }
+
   try {
     const raw = await fs.readFile(LOCAL_AUTH_PATH, 'utf8');
     const payload = JSON.parse(raw);
@@ -200,6 +205,12 @@ app.post('/api/auth/anilist-token', async (req, res) => {
     return res.status(400).json({ error: 'Missing AniList token' });
   }
 
+  if (process.env.VERCEL === '1') {
+    return res.status(501).json({
+      error: 'Token file writes are disabled on Vercel. Set ANILIST_TOKEN in Vercel environment variables.'
+    });
+  }
+
   try {
     await fs.mkdir(path.dirname(LOCAL_AUTH_PATH), { recursive: true });
     const savedAt = new Date().toISOString();
@@ -215,6 +226,11 @@ app.post('/api/auth/anilist-token', async (req, res) => {
 });
 
 app.get('/api/auth/anilist-token/status', async (req, res) => {
+  const envToken = String(process.env.ANILIST_TOKEN || '').trim();
+  if (envToken) {
+    return res.json({ configured: true, savedAt: 'env' });
+  }
+
   try {
     const raw = await fs.readFile(LOCAL_AUTH_PATH, 'utf8');
     const payload = JSON.parse(raw);
@@ -438,7 +454,11 @@ app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`Anime streaming starter running at http://localhost:${PORT}`);
-});
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`Anime streaming starter running at http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
 

@@ -40,6 +40,7 @@ const AUTO_ROTATE_MAX_DELAY_MS = 5000;
 let autoRotateTimer = null;
 let autoRotateInProgress = false;
 let autoRotateTriedSeaProviders = new Set();
+let playbackWatchdogTimer = null;
 
 // --- Sidebar Logic ---
 if (sidebarToggle) {
@@ -156,6 +157,21 @@ function clearAutoRotateTimer() {
   autoRotateInProgress = false;
 }
 
+function clearPlaybackWatchdog() {
+  if (playbackWatchdogTimer) {
+    clearTimeout(playbackWatchdogTimer);
+    playbackWatchdogTimer = null;
+  }
+}
+
+function startPlaybackWatchdog(onTimeout) {
+  clearPlaybackWatchdog();
+  playbackWatchdogTimer = setTimeout(() => {
+    playbackWatchdogTimer = null;
+    onTimeout();
+  }, 5000);
+}
+
 function resetAutoRotateState() {
   clearAutoRotateTimer();
   autoRotateTriedSeaProviders = new Set();
@@ -269,6 +285,7 @@ function playSelectedSource(sourceItem) {
   }
 
   clearAutoRotateTimer();
+  clearPlaybackWatchdog();
 
   if (sourceItem.type === 'youtube' || sourceItem.type === 'embed') {
     const iframe = document.createElement('iframe');
@@ -300,11 +317,22 @@ function playSelectedSource(sourceItem) {
     return true;
   };
 
+  const handlePlaybackTimeout = () => {
+    if (!nextSource() && !scheduleSeaProviderRotation('Stream loading timed out')) {
+      showToast('Stream loading timed out for this episode', 'error');
+    }
+  };
+
   playerEl.addEventListener('error', () => {
+    clearPlaybackWatchdog();
     if (!nextSource() && !scheduleSeaProviderRotation('All stream servers failed')) {
       showToast('All stream servers failed for this episode', 'error');
     }
   }, { once: true });
+
+  playerEl.addEventListener('playing', clearPlaybackWatchdog, { once: true });
+  playerEl.addEventListener('canplay', clearPlaybackWatchdog, { once: true });
+  startPlaybackWatchdog(handlePlaybackTimeout);
 
   if (sourceItem.type === 'm3u8' || /\.m3u8($|\?)/i.test(sourceItem.url)) {
     if (window.Hls && Hls.isSupported()) {
@@ -321,6 +349,7 @@ function playSelectedSource(sourceItem) {
       hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => playerEl.play().catch(() => {}));
       hlsInstance.on(Hls.Events.ERROR, (_, data) => {
         if (data?.fatal) {
+          clearPlaybackWatchdog();
           if (!nextSource() && !scheduleSeaProviderRotation('All stream servers failed')) {
             showToast('All stream servers failed for this episode', 'error');
           }
