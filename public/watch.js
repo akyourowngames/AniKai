@@ -12,11 +12,18 @@ const providerSelectEl = document.querySelector('#providerSelect');
 const seaProviderSelectEl = document.querySelector('#seaProviderSelect');
 const serverSelectEl = document.querySelector('#serverSelect');
 const qualitySelectEl = document.querySelector('#qualitySelect');
+const subtitleLanguageEl = document.querySelector('#subtitleLanguage');
+const subtitleFormatEl = document.querySelector('#subtitleFormat');
+const subtitleHiEl = document.querySelector('#subtitleHi');
+const subtitleSearchBtn = document.querySelector('#subtitleSearchBtn');
+const subtitleListEl = document.querySelector('#subtitleList');
 const episodeListEl = document.querySelector('#episodeList');
 const epCountEl = document.querySelector('#epCount');
 const nextEpBtn = document.querySelector('#nextEpBtn');
 const prevEpBtn = document.querySelector('#prevEpBtn');
 const theaterBtn = document.querySelector('#theaterBtn');
+const subtitlePanelToggleBtn = document.querySelector('#subtitlePanelToggle');
+const subtitlePanelEl = document.querySelector('#subtitlePanel');
 const sidebarToggle = document.querySelector('#sidebarToggle');
 
 // Search refs
@@ -35,12 +42,7 @@ let currentSources = [];
 let sourceCursor = 0;
 let episodeData = [];
 let catalog = []; // For quick search
-const AUTO_ROTATE_MIN_DELAY_MS = 5000;
-const AUTO_ROTATE_MAX_DELAY_MS = 5000;
-let autoRotateTimer = null;
-let autoRotateInProgress = false;
-let autoRotateTriedSeaProviders = new Set();
-let playbackWatchdogTimer = null;
+let subtitleResults = [];
 
 // --- Sidebar Logic ---
 if (sidebarToggle) {
@@ -72,6 +74,10 @@ theaterBtn.addEventListener('click', () => {
   showToast(document.body.classList.contains('theater-mode') ? 'Theater mode on' : 'Theater mode off');
 });
 
+subtitlePanelToggleBtn?.addEventListener('click', () => {
+  subtitlePanelEl?.classList.toggle('open');
+});
+
 // --- Navigation Logic ---
 function updateEpisodeNavigation() {
   const currentIndex = episodeData.findIndex(ep => ep.number === selectedEpisode);
@@ -98,7 +104,6 @@ prevEpBtn.addEventListener('click', () => {
 async function changeEpisode(num) {
   selectedEpisode = num;
   updateUrlParams({ episode: selectedEpisode });
-  resetAutoRotateState();
   
   // UI Update
   document.querySelectorAll('.ep-btn-premium').forEach(btn => {
@@ -107,6 +112,7 @@ async function changeEpisode(num) {
   
   updateEpisodeNavigation();
   await loadEpisodeSource();
+  await searchSubtitles();
   showToast(`Switched to Episode ${num}`);
 }
 
@@ -133,6 +139,16 @@ function resetPlayerHost() {
   return playerHostEl.querySelector('#player');
 }
 
+function getPlayerEl() {
+  return document.querySelector('#player');
+}
+
+function clearInjectedSubtitles() {
+  const playerEl = getPlayerEl();
+  if (!playerEl) return;
+  playerEl.querySelectorAll('track[data-anikai-sub="1"]').forEach((node) => node.remove());
+}
+
 function selectSource() {
   const byServer = selectedServer
     ? currentSources.filter((item) => item.server === selectedServer)
@@ -147,84 +163,6 @@ function selectSource() {
   if (autoQuality) return autoQuality;
 
   return pool[0];
-}
-
-function clearAutoRotateTimer() {
-  if (autoRotateTimer) {
-    clearTimeout(autoRotateTimer);
-    autoRotateTimer = null;
-  }
-  autoRotateInProgress = false;
-}
-
-function clearPlaybackWatchdog() {
-  if (playbackWatchdogTimer) {
-    clearTimeout(playbackWatchdogTimer);
-    playbackWatchdogTimer = null;
-  }
-}
-
-function startPlaybackWatchdog(onTimeout) {
-  clearPlaybackWatchdog();
-  playbackWatchdogTimer = setTimeout(() => {
-    playbackWatchdogTimer = null;
-    onTimeout();
-  }, 5000);
-}
-
-function resetAutoRotateState() {
-  clearAutoRotateTimer();
-  autoRotateTriedSeaProviders = new Set();
-  if (selectedProvider === 'seanime') {
-    autoRotateTriedSeaProviders.add(String(selectedSeaProvider || '').toLowerCase());
-  }
-}
-
-function getSeaProviderLabel(providerId) {
-  if (!providerId) return 'Auto (fallback)';
-  const match = availableSeaProviders.find((item) => String(item.id || '').toLowerCase() === providerId);
-  return match?.name || providerId;
-}
-
-function randomRotateDelay() {
-  return Math.floor(Math.random() * (AUTO_ROTATE_MAX_DELAY_MS - AUTO_ROTATE_MIN_DELAY_MS + 1)) + AUTO_ROTATE_MIN_DELAY_MS;
-}
-
-function getSeaProviderRotationQueue() {
-  const ids = ['', ...availableSeaProviders.map((item) => String(item.id || '').toLowerCase())];
-  const uniq = [...new Set(ids)];
-  return uniq.filter((id) => !autoRotateTriedSeaProviders.has(id));
-}
-
-function scheduleSeaProviderRotation(reason = 'Stream unavailable') {
-  if (selectedProvider !== 'seanime') return false;
-  if (autoRotateInProgress || autoRotateTimer) return true;
-
-  const queue = getSeaProviderRotationQueue();
-  if (!queue.length) {
-    showToast('All Sea sources exhausted for this episode', 'error');
-    return false;
-  }
-
-  const nextSeaProvider = queue[0];
-  const delay = randomRotateDelay();
-  autoRotateInProgress = true;
-  showToast(`${reason}. Rotating Sea source in ${Math.round(delay / 1000)}s`, 'error');
-
-  autoRotateTimer = setTimeout(async () => {
-    autoRotateTimer = null;
-    autoRotateInProgress = false;
-    selectedSeaProvider = nextSeaProvider;
-    autoRotateTriedSeaProviders.add(nextSeaProvider);
-    if (seaProviderSelectEl) {
-      seaProviderSelectEl.value = selectedSeaProvider;
-    }
-    updateUrlParams({ seaProvider: selectedSeaProvider || null });
-    showToast(`Trying Sea source: ${getSeaProviderLabel(selectedSeaProvider)}`);
-    await loadEpisodeSource();
-  }, delay);
-
-  return true;
 }
 
 function buildSourceOrder() {
@@ -278,14 +216,9 @@ function renderQualityOptions() {
 function playSelectedSource(sourceItem) {
   if (!sourceItem) {
     playerHostEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#666;font-weight:600;">No stream available for this episode</div>';
-    if (!scheduleSeaProviderRotation('No stream available')) {
-      showToast('No stream available for this episode', 'error');
-    }
+    showToast('No stream available for this episode', 'error');
     return;
   }
-
-  clearAutoRotateTimer();
-  clearPlaybackWatchdog();
 
   if (sourceItem.type === 'youtube' || sourceItem.type === 'embed') {
     const iframe = document.createElement('iframe');
@@ -297,42 +230,10 @@ function playSelectedSource(sourceItem) {
   }
 
   const playerEl = resetPlayerHost();
-  const nextSource = () => {
-    const order = buildSourceOrder();
-    if (sourceCursor >= order.length - 1) return false;
-    sourceCursor += 1;
-    const fallback = order[sourceCursor];
-    if (!fallback) return false;
-    selectedServer = fallback.server || selectedServer;
-    selectedQuality = fallback.quality || selectedQuality;
-    if (serverSelectEl && selectedServer) {
-      serverSelectEl.value = selectedServer;
-    }
-    if (qualitySelectEl && selectedQuality) {
-      qualitySelectEl.value = selectedQuality;
-    }
-    updateUrlParams({ server: selectedServer, quality: selectedQuality });
-    showToast(`Switching to ${selectedServer} (${selectedQuality})`, 'error');
-    playSelectedSource(fallback);
-    return true;
-  };
-
-  const handlePlaybackTimeout = () => {
-    if (!nextSource() && !scheduleSeaProviderRotation('Stream loading timed out')) {
-      showToast('Stream loading timed out for this episode', 'error');
-    }
-  };
-
+  clearInjectedSubtitles();
   playerEl.addEventListener('error', () => {
-    clearPlaybackWatchdog();
-    if (!nextSource() && !scheduleSeaProviderRotation('All stream servers failed')) {
-      showToast('All stream servers failed for this episode', 'error');
-    }
+    showToast('Stream failed. Please select another source manually.', 'error');
   }, { once: true });
-
-  playerEl.addEventListener('playing', clearPlaybackWatchdog, { once: true });
-  playerEl.addEventListener('canplay', clearPlaybackWatchdog, { once: true });
-  startPlaybackWatchdog(handlePlaybackTimeout);
 
   if (sourceItem.type === 'm3u8' || /\.m3u8($|\?)/i.test(sourceItem.url)) {
     if (window.Hls && Hls.isSupported()) {
@@ -349,10 +250,7 @@ function playSelectedSource(sourceItem) {
       hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => playerEl.play().catch(() => {}));
       hlsInstance.on(Hls.Events.ERROR, (_, data) => {
         if (data?.fatal) {
-          clearPlaybackWatchdog();
-          if (!nextSource() && !scheduleSeaProviderRotation('All stream servers failed')) {
-            showToast('All stream servers failed for this episode', 'error');
-          }
+          showToast('HLS stream failed. Please select another source manually.', 'error');
         }
       });
       return;
@@ -360,6 +258,93 @@ function playSelectedSource(sourceItem) {
   }
   playerEl.src = sourceItem.url;
   playerEl.play().catch(() => {});
+}
+
+function renderSubtitleResults() {
+  if (!subtitleListEl) return;
+  if (!subtitleResults.length) {
+    subtitleListEl.innerHTML = '<div style="color: var(--text-dim); font-size: 12px;">No subtitles found for this episode.</div>';
+    return;
+  }
+
+  subtitleListEl.innerHTML = '';
+  subtitleResults.forEach((sub, index) => {
+    const item = document.createElement('div');
+    item.className = 'subtitle-item';
+    const language = String(sub.display || sub.language || 'Unknown');
+    const format = String(sub.format || '').toUpperCase();
+    item.innerHTML = `
+      <div>
+        <div>${language}${sub.isHearingImpaired ? ' [CC]' : ''}</div>
+        <small>${format || 'UNK'} - ${sub.source || 'subtitle'}</small>
+      </div>
+      <button type="button" data-sub-index="${index}">Use</button>
+    `;
+    subtitleListEl.appendChild(item);
+  });
+}
+
+async function attachSubtitle(index) {
+  const sub = subtitleResults[index];
+  if (!sub) return;
+  const playerEl = getPlayerEl();
+  if (!playerEl || playerEl.tagName !== 'VIDEO') {
+    showToast('Subtitle works only on direct video streams', 'error');
+    return;
+  }
+
+  try {
+    const proxyUrl = `/api/subtitles/file?url=${encodeURIComponent(sub.url)}&format=${encodeURIComponent(sub.format || '')}`;
+    clearInjectedSubtitles();
+    const track = document.createElement('track');
+    track.dataset.anikaiSub = '1';
+    track.kind = 'subtitles';
+    track.label = `${sub.display || sub.language || 'Subtitle'} ${sub.format ? `[${String(sub.format).toUpperCase()}]` : ''}`.trim();
+    track.srclang = String(sub.language || 'en').toLowerCase();
+    track.src = proxyUrl;
+    track.default = true;
+    track.addEventListener('load', () => {
+      if (track.track) track.track.mode = 'showing';
+    });
+    playerEl.appendChild(track);
+    showToast(`Subtitle loaded: ${sub.display || sub.language || 'Unknown'}`);
+  } catch (error) {
+    console.error(error);
+    showToast('Failed to attach subtitle', 'error');
+  }
+}
+
+async function searchSubtitles() {
+  if (!animeId || !subtitleListEl || !subtitleSearchBtn) return;
+  subtitleSearchBtn.disabled = true;
+  subtitleListEl.innerHTML = '<div style="color: var(--text-dim); font-size: 12px;">Searching subtitles...</div>';
+
+  try {
+    const response = await fetch('/api/subtitles/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mediaId: Number(animeId),
+        source,
+        episodeNumber: selectedEpisode,
+        seasonNumber: 1,
+        language: subtitleLanguageEl?.value || 'all',
+        format: subtitleFormatEl?.value || 'all',
+        hi: Boolean(subtitleHiEl?.checked)
+      })
+    });
+    const payload = await parseApiJson(response);
+    if (!response.ok) throw new Error(payload?.error || 'Subtitle search failed');
+    subtitleResults = Array.isArray(payload?.results) ? payload.results : [];
+    renderSubtitleResults();
+  } catch (error) {
+    console.error(error);
+    subtitleResults = [];
+    subtitleListEl.innerHTML = '<div style="color: #d66; font-size: 12px;">Subtitle search failed.</div>';
+    showToast(error.message || 'Subtitle search failed', 'error');
+  } finally {
+    subtitleSearchBtn.disabled = false;
+  }
 }
 
 function renderAndPlay() {
@@ -397,7 +382,7 @@ async function loadEpisodeSource() {
         seaProvider: selectedSeaProvider || undefined
       })
     });
-    const payload = await response.json();
+    const payload = await parseApiJson(response);
     if (!response.ok) {
       throw new Error(payload?.error || 'Failed to load episode source');
     }
@@ -412,9 +397,7 @@ async function loadEpisodeSource() {
     renderAndPlay();
   } catch (error) {
     console.error(error);
-    if (!scheduleSeaProviderRotation(error.message || 'Failed to load video stream')) {
-      showToast(error.message || 'Failed to load video stream', 'error');
-    }
+    showToast(error.message || 'Failed to load video stream', 'error');
   }
 }
 
@@ -430,7 +413,7 @@ async function loadEpisodeList() {
         seaProvider: selectedSeaProvider || undefined
       })
     });
-    const payload = await response.json();
+    const payload = await parseApiJson(response);
     if (!response.ok) {
       throw new Error(payload?.error || 'Failed to load episode list');
     }
@@ -463,7 +446,7 @@ async function loadSeaProviders() {
   seaProviderSelectEl.style.display = '';
   try {
     const res = await fetch('/api/onlinestream/seanime/providers');
-    const providers = await res.json();
+    const providers = await parseApiJson(res);
     availableSeaProviders = Array.isArray(providers) ? providers : [];
   } catch (_) {
     availableSeaProviders = [];
@@ -487,13 +470,13 @@ async function loadSeaProviders() {
   }
   seaProviderSelectEl.value = selectedSeaProvider;
   updateUrlParams({ seaProvider: selectedSeaProvider || null });
-  resetAutoRotateState();
 }
 
 // --- Quick Search Logic ---
 async function setupQuickSearch() {
   const res = await fetch(`/api/anime?source=${source}`);
-  catalog = await res.json();
+  const payload = await parseApiJson(res);
+  catalog = Array.isArray(payload) ? payload : [];
   
   searchInput.addEventListener('input', (e) => {
     const term = e.target.value.trim().toLowerCase();
@@ -525,28 +508,30 @@ searchInput.addEventListener('blur', () => {
 });
 
 // --- Helpers ---
-function showToast(msg, type = 'success') {
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.textContent = msg;
-  document.body.appendChild(toast);
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    setTimeout(() => toast.remove(), 300);
-  }, 2500);
+
+async function parseApiJson(response) {
+  const raw = await response.text();
+  try {
+    return raw ? JSON.parse(raw) : {};
+  } catch (_) {
+    return { error: `Unexpected response (${response.status})` };
+  }
 }
 
 async function init() {
   try {
+    if (subtitlePanelEl && window.innerWidth > 820) {
+      subtitlePanelEl.classList.add('open');
+    }
     const response = await fetch(`/api/anime/${animeId}?source=${source}`);
-    const anime = await response.json();
+    const anime = await parseApiJson(response);
     
     titleEl.textContent = anime.title;
     posterEl.src = anime.poster;
     descEl.textContent = anime.description;
     
     metaEl.innerHTML = `
-      <div class="pill accent">★ ${anime.score || '0.0'}</div>
+      <div class="pill accent">* ${anime.score || '0.0'}</div>
       <div class="pill">${anime.year || 'N/A'}</div>
       <div class="pill">${anime.type || 'TV'}</div>
       ${anime.genres.slice(0, 3).map(g => `<div class="pill">${g}</div>`).join('')}
@@ -554,7 +539,7 @@ async function init() {
 
     // Fetch providers
     const pRes = await fetch('/api/onlinestream/providers');
-    const providers = await pRes.json();
+    const providers = await parseApiJson(pRes);
     providerSelectEl.innerHTML = providers.map(p => `<option value="${p.id}">Provider: ${p.name}</option>`).join('');
     const providerIds = providers.map((p) => p.id);
     if (!providerIds.includes(selectedProvider)) {
@@ -564,8 +549,8 @@ async function init() {
     updateUrlParams({ provider: selectedProvider });
 
     await loadSeaProviders();
-    resetAutoRotateState();
     await loadEpisodeList();
+    await searchSubtitles();
     setupQuickSearch();
   } catch (error) {
     console.error(error);
@@ -576,14 +561,12 @@ providerSelectEl.addEventListener('change', async () => {
     selectedProvider = providerSelectEl.value;
     updateUrlParams({ provider: selectedProvider, seaProvider: selectedProvider === 'seanime' ? selectedSeaProvider : null });
     await loadSeaProviders();
-    resetAutoRotateState();
     await loadEpisodeList();
 });
 
 seaProviderSelectEl.addEventListener('change', async () => {
     selectedSeaProvider = seaProviderSelectEl.value;
     updateUrlParams({ seaProvider: selectedSeaProvider || null });
-    resetAutoRotateState();
     await loadEpisodeList();
 });
 
@@ -597,4 +580,15 @@ qualitySelectEl.addEventListener('change', () => {
     renderAndPlay();
 });
 
+subtitleSearchBtn?.addEventListener('click', searchSubtitles);
+subtitleListEl?.addEventListener('click', (event) => {
+    const btn = event.target.closest('button[data-sub-index]');
+    if (!btn) return;
+    const index = Number(btn.dataset.subIndex);
+    if (Number.isNaN(index)) return;
+    attachSubtitle(index);
+});
+
 init();
+
+

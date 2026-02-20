@@ -36,6 +36,8 @@ let watchList = JSON.parse(localStorage.getItem('watchList')) || [];
 const ANILIST_START_URL = '/api/auth/anilist/start';
 const CATALOG_PAGE_SIZE = 24;
 const CATALOG_MAX_PAGES = 200;
+const MAX_LATEST_VISIBLE = 12;
+const MAX_TRENDING_VISIBLE = 36;
 const renderedLatestIds = new Set();
 const renderedTrendingIds = new Set();
 
@@ -311,8 +313,8 @@ function renderCatalogSections() {
   }
 
   renderHero(catalog[0]);
-  const latestItems = catalog.slice(0, 12);
-  const trendingItems = catalog.slice(12, 24);
+  const latestItems = catalog.slice(0, MAX_LATEST_VISIBLE);
+  const trendingItems = catalog.slice(MAX_LATEST_VISIBLE, MAX_TRENDING_VISIBLE);
   renderGrid(latestGrid, latestItems);
   renderGrid(animeGrid, trendingItems);
   latestItems.forEach((anime) => renderedLatestIds.add(String(anime.id)));
@@ -340,13 +342,13 @@ function appendNewCatalogToSections(items) {
 
   items.forEach((anime) => {
     const animeId = String(anime.id);
-    if (renderedLatestIds.size < 12 && !renderedLatestIds.has(animeId)) {
+    if (renderedLatestIds.size < MAX_LATEST_VISIBLE && !renderedLatestIds.has(animeId)) {
       renderGrid(latestGrid, [anime]);
       renderedLatestIds.add(animeId);
       return;
     }
 
-    if (!renderedTrendingIds.has(animeId)) {
+    if (renderedTrendingIds.size < (MAX_TRENDING_VISIBLE - MAX_LATEST_VISIBLE) && !renderedTrendingIds.has(animeId)) {
       renderGrid(animeGrid, [anime]);
       renderedTrendingIds.add(animeId);
     }

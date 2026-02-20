@@ -18,6 +18,12 @@ function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function convertSrtToVtt(text) {
+  const normalized = String(text || '').replace(/\r+/g, '');
+  const withWebVtt = normalized.startsWith('WEBVTT') ? normalized : `WEBVTT\n\n${normalized}`;
+  return withWebVtt.replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2');
+}
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -57,6 +63,7 @@ function getSeaAnimeBaseUrls() {
       [
         ...(preferred ? [preferred] : []),
         ...envBaseUrls,
+        'https://seaanime-1.onrender.com',
         'http://127.0.0.1:43211',
         'http://localhost:43211',
         'http://127.0.0.1:43000',
@@ -196,6 +203,107 @@ app.get('/api/onlinestream/seanime/providers', async (req, res) => {
     return res.json(providers);
   } catch (error) {
     return res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/subtitles/search', async (req, res) => {
+  const mediaId = Number(req.body?.mediaId);
+  const source = String(req.body?.source || 'anilist').toLowerCase();
+  const episodeNumber = Number(req.body?.episodeNumber || 1);
+  const seasonNumber = Number(req.body?.seasonNumber || 1);
+  const language = String(req.body?.language || 'all').trim().toLowerCase();
+  const format = String(req.body?.format || 'all').trim().toLowerCase();
+  const hi = String(req.body?.hi || '').toLowerCase() === 'true' || req.body?.hi === true;
+
+  if (!Number.isFinite(mediaId)) {
+    return res.status(400).json({ error: 'Invalid mediaId' });
+  }
+
+  try {
+    const anilistToken = source === 'anilist' ? await getSavedAnilistToken() : '';
+    const anime = await getAnimeDetails(mediaId, source, anilistToken);
+    const isMovie = String(anime?.type || '').toUpperCase() === 'MOVIE';
+
+    let subtitleId = '';
+    if (source === 'anilist') {
+      const mapperRes = await fetch(`https://ramregar97-idmapper.hf.space/api/mapper?anilist_id=${mediaId}`);
+      if (mapperRes.ok) {
+        const mapped = await mapperRes.json();
+        subtitleId = String(
+          isMovie
+            ? (mapped?.tmdb_movie_id || mapped?.themoviedb_id || mapped?.imdb_id || '')
+            : (mapped?.tmdb_show_id || mapped?.themoviedb_id || mapped?.imdb_id || '')
+        ).trim();
+      }
+    }
+
+    if (!subtitleId) {
+      return res.json({ results: [], reason: 'No TMDB/IMDB mapping found' });
+    }
+
+    const searchUrl = new URL('https://sub.wyzie.ru/search');
+    searchUrl.searchParams.set('id', subtitleId);
+    if (!isMovie) {
+      searchUrl.searchParams.set('season', String(seasonNumber));
+      searchUrl.searchParams.set('episode', String(episodeNumber));
+    }
+    if (language !== 'all') searchUrl.searchParams.set('language', language);
+    if (format !== 'all') searchUrl.searchParams.set('format', format);
+    if (hi) searchUrl.searchParams.set('isHearingImpaired', 'true');
+
+    const subsRes = await fetch(searchUrl.toString());
+    if (!subsRes.ok) {
+      const body = await subsRes.text().catch(() => '');
+      return res.status(502).json({ error: `Subtitle API failed with ${subsRes.status}`, details: body.slice(0, 200) });
+    }
+
+    const raw = await subsRes.json();
+    const results = Array.isArray(raw) ? raw : [];
+    return res.json({
+      subtitleId,
+      isMovie,
+      results: results.slice(0, 80)
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/subtitles/file', async (req, res) => {
+  const rawUrl = String(req.query.url || '').trim();
+  const format = String(req.query.format || '').trim().toLowerCase();
+  if (!rawUrl) {
+    return res.status(400).send('Missing subtitle URL');
+  }
+
+  let target;
+  try {
+    target = new URL(rawUrl);
+  } catch (_) {
+    return res.status(400).send('Invalid subtitle URL');
+  }
+  if (!['http:', 'https:'].includes(target.protocol)) {
+    return res.status(400).send('Unsupported URL protocol');
+  }
+
+  try {
+    const response = await fetch(target.toString());
+    if (!response.ok) {
+      return res.status(502).send(`Failed to fetch subtitle (${response.status})`);
+    }
+
+    const body = await response.text();
+    const type = response.headers.get('content-type') || '';
+    const isSrt = format === 'srt' || type.includes('application/x-subrip') || /\.srt($|\?)/i.test(target.pathname);
+    if (isSrt) {
+      res.setHeader('Content-Type', 'text/vtt; charset=utf-8');
+      return res.send(convertSrtToVtt(body));
+    }
+
+    res.setHeader('Content-Type', type || 'text/vtt; charset=utf-8');
+    return res.send(body);
+  } catch (error) {
+    return res.status(500).send(error.message);
   }
 });
 
