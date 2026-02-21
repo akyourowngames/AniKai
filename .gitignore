@@ -5,3 +5,5 @@ data/auth/anilist-token.json
 *.log
 .env
 .env.*
+.vercel
+.env*.local

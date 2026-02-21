@@ -15,6 +15,7 @@ const heroTitle = document.querySelector('#heroTitle');
 const heroDesc = document.querySelector('#heroDesc');
 const heroMeta = document.querySelector('#heroMeta');
 const heroWatchBtn = document.querySelector('#heroWatchBtn');
+const trendingCarousel = document.querySelector('#trendingCarousel');
 const sidebarToggle = document.querySelector('#sidebarToggle');
 const sidebar = document.querySelector('#sidebar');
 const randomBtn = document.querySelector('#randomBtn');
@@ -40,6 +41,9 @@ const MAX_LATEST_VISIBLE = 12;
 const MAX_TRENDING_VISIBLE = 36;
 const renderedLatestIds = new Set();
 const renderedTrendingIds = new Set();
+let carouselInterval = null;
+let carouselItems = [];
+let carouselIndex = 0;
 
 if (openAnilistTokenPage) {
   openAnilistTokenPage.href = ANILIST_START_URL;
@@ -313,6 +317,7 @@ function renderCatalogSections() {
   }
 
   renderHero(catalog[0]);
+  renderTrendingCarousel(catalog.slice(0, 5));
   const latestItems = catalog.slice(0, MAX_LATEST_VISIBLE);
   const trendingItems = catalog.slice(MAX_LATEST_VISIBLE, MAX_TRENDING_VISIBLE);
   renderGrid(latestGrid, latestItems);
@@ -322,6 +327,65 @@ function renderCatalogSections() {
   renderTopList(catalog.slice(0, 10));
   loadContinueWatching();
   renderWatchList();
+}
+
+function renderTrendingCarousel(items) {
+  if (!trendingCarousel) return;
+  carouselItems = Array.isArray(items) ? items.slice(0, 5) : [];
+  if (!carouselItems.length) {
+    trendingCarousel.innerHTML = '';
+    return;
+  }
+
+  trendingCarousel.innerHTML = carouselItems
+    .map((anime, index) => `
+      <a class="carousel-card" href="/watch.html?id=${anime.id}&source=${source}" style="--i:${index};" title="${anime.title}" data-index="${index}">
+        <img src="${anime.poster || ''}" alt="${anime.title}" loading="lazy" />
+      </a>
+    `)
+    .join('');
+
+  if (carouselInterval) clearInterval(carouselInterval);
+  carouselIndex = 0;
+
+  const setActive = (nextIndex) => {
+    if (!carouselItems.length) return;
+    carouselIndex = ((nextIndex % carouselItems.length) + carouselItems.length) % carouselItems.length;
+    const angle = -carouselIndex * 72;
+    trendingCarousel.style.setProperty('--carousel-rotate', `${angle}deg`);
+    renderHero(carouselItems[carouselIndex]);
+    trendingCarousel.querySelectorAll('.carousel-card').forEach((card, index) => {
+      card.classList.toggle('is-active', index === carouselIndex);
+    });
+  };
+
+  setActive(0);
+
+  const rotate = () => {
+    setActive(carouselIndex + 1);
+  };
+  const start = () => {
+    if (!carouselInterval) {
+      carouselInterval = setInterval(rotate, 2500);
+    }
+  };
+  const stop = () => {
+    if (carouselInterval) {
+      clearInterval(carouselInterval);
+      carouselInterval = null;
+    }
+  };
+  start();
+  trendingCarousel.onmouseenter = stop;
+  trendingCarousel.onmouseleave = start;
+  trendingCarousel.onclick = (event) => {
+    const card = event.target.closest('.carousel-card');
+    if (!card) return;
+    const index = Number(card.dataset.index);
+    if (!Number.isNaN(index)) {
+      setActive(index);
+    }
+  };
 }
 
 function mergeCatalogChunk(items) {

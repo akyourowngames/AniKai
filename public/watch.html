@@ -10,8 +10,10 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="/vendor/plyr/plyr.css" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="/vendor/plyr/plyr.polyfilled.min.js"></script>
   </head>
   <body class="watch-page">
     <!-- Sidebar -->
@@ -158,6 +160,9 @@
               <select id="seaProviderSelect"></select>
               <select id="serverSelect"></select>
               <select id="qualitySelect"></select>
+              <select id="audioSelect">
+                <option value="">Audio: Default</option>
+              </select>
             </div>
 
             <div class="ep-scroll-premium">

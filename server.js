@@ -537,7 +537,7 @@ app.post('/api/onlinestream/episode-source', async (req, res) => {
         }
         const sourceType = String(item?.type || '').toLowerCase();
         const isEmbeddable = sourceType === 'embed' || sourceType === 'youtube';
-        const needsProxy = !isEmbeddable && (provider.id === 'animesaturn' || provider.id === 'anicrush' || provider.id === 'hianime' || Boolean(item?.headers));
+        const needsProxy = !isEmbeddable && (provider.id === 'animesaturn' || provider.id === 'anicrush');
         if (!needsProxy) {
           return item;
         }

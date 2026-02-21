@@ -12,6 +12,7 @@ const providerSelectEl = document.querySelector('#providerSelect');
 const seaProviderSelectEl = document.querySelector('#seaProviderSelect');
 const serverSelectEl = document.querySelector('#serverSelect');
 const qualitySelectEl = document.querySelector('#qualitySelect');
+const audioSelectEl = document.querySelector('#audioSelect');
 const subtitleLanguageEl = document.querySelector('#subtitleLanguage');
 const subtitleFormatEl = document.querySelector('#subtitleFormat');
 const subtitleHiEl = document.querySelector('#subtitleHi');
@@ -32,6 +33,7 @@ const searchResults = document.querySelector('#searchResults');
 const searchResultTemplate = document.querySelector('#searchResultTemplate');
 
 let hlsInstance = null;
+let plyrInstance = null;
 let selectedEpisode = Number(params.get('episode')) || 1;
 let selectedProvider = (params.get('provider') || 'seanime').toLowerCase();
 let selectedSeaProvider = (params.get('seaProvider') || '').toLowerCase();
@@ -43,6 +45,18 @@ let sourceCursor = 0;
 let episodeData = [];
 let catalog = []; // For quick search
 let subtitleResults = [];
+let availableProviderIds = [];
+
+function showToast(msg, type = 'success') {
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
 
 // --- Sidebar Logic ---
 if (sidebarToggle) {
@@ -131,6 +145,10 @@ function updateUrlParams(nextValues = {}) {
 }
 
 function resetPlayerHost() {
+  if (plyrInstance) {
+    plyrInstance.destroy();
+    plyrInstance = null;
+  }
   if (hlsInstance) {
     hlsInstance.destroy();
     hlsInstance = null;
@@ -147,6 +165,68 @@ function clearInjectedSubtitles() {
   const playerEl = getPlayerEl();
   if (!playerEl) return;
   playerEl.querySelectorAll('track[data-anikai-sub="1"]').forEach((node) => node.remove());
+}
+
+function setupPlyr(playerEl) {
+  if (!window.Plyr || !playerEl) return null;
+  plyrInstance = new Plyr(playerEl, {
+    controls: [
+      'play-large',
+      'rewind',
+      'play',
+      'fast-forward',
+      'progress',
+      'current-time',
+      'duration',
+      'mute',
+      'volume',
+      'captions',
+      'settings',
+      'pip',
+      'fullscreen'
+    ],
+    settings: ['captions', 'quality', 'speed', 'loop'],
+    seekTime: 10,
+    captions: { active: true, update: true, language: 'auto' },
+    keyboard: { focused: true, global: true }
+  });
+  return plyrInstance;
+}
+
+function setAudioSelectState(tracks = [], selectedIndex = -1) {
+  if (!audioSelectEl) return;
+  audioSelectEl.innerHTML = '';
+
+  if (!Array.isArray(tracks) || tracks.length <= 1) {
+    audioSelectEl.style.display = 'none';
+    const fallback = document.createElement('option');
+    fallback.value = '';
+    fallback.textContent = 'Audio: Default';
+    audioSelectEl.appendChild(fallback);
+    return;
+  }
+
+  tracks.forEach((track, index) => {
+    const option = document.createElement('option');
+    option.value = String(index);
+    const label = String(track?.name || track?.lang || `Track ${index + 1}`).trim();
+    option.textContent = `Audio: ${label}`;
+    audioSelectEl.appendChild(option);
+  });
+
+  const safeSelected = Number.isInteger(selectedIndex) && selectedIndex >= 0 && selectedIndex < tracks.length ? selectedIndex : 0;
+  audioSelectEl.value = String(safeSelected);
+  audioSelectEl.style.display = '';
+}
+
+function syncAudioTracks() {
+  if (!hlsInstance) {
+    setAudioSelectState([], -1);
+    return;
+  }
+  const tracks = Array.isArray(hlsInstance.audioTracks) ? hlsInstance.audioTracks : [];
+  const selected = Number(hlsInstance.audioTrack);
+  setAudioSelectState(tracks, selected);
 }
 
 function selectSource() {
@@ -221,6 +301,16 @@ function playSelectedSource(sourceItem) {
   }
 
   if (sourceItem.type === 'youtube' || sourceItem.type === 'embed') {
+    if (plyrInstance) {
+      plyrInstance.destroy();
+      plyrInstance = null;
+    }
+    if (hlsInstance) {
+      hlsInstance.destroy();
+      hlsInstance = null;
+    }
+    setAudioSelectState([], -1);
+
     const iframe = document.createElement('iframe');
     iframe.src = sourceItem.type === 'youtube' ? `https://www.youtube-nocookie.com/embed/${sourceItem.url}` : sourceItem.url;
     iframe.allowFullscreen = true;
@@ -230,9 +320,14 @@ function playSelectedSource(sourceItem) {
   }
 
   const playerEl = resetPlayerHost();
+  setupPlyr(playerEl);
   clearInjectedSubtitles();
+  setAudioSelectState([], -1);
+
   playerEl.addEventListener('error', () => {
-    showToast('Stream failed. Please select another source manually.', 'error');
+    if (!tryNextSource('Stream')) {
+      showToast('Stream failed. Please select another source manually.', 'error');
+    }
   }, { once: true });
 
   if (sourceItem.type === 'm3u8' || /\.m3u8($|\?)/i.test(sourceItem.url)) {
@@ -247,17 +342,29 @@ function playSelectedSource(sourceItem) {
       });
       hlsInstance.loadSource(sourceItem.url);
       hlsInstance.attachMedia(playerEl);
-      hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => playerEl.play().catch(() => {}));
+      hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+        syncAudioTracks();
+        if (plyrInstance) plyrInstance.play().catch(() => {});
+        else playerEl.play().catch(() => {});
+      });
+      hlsInstance.on(Hls.Events.AUDIO_TRACKS_UPDATED, () => syncAudioTracks());
+      hlsInstance.on(Hls.Events.AUDIO_TRACK_SWITCHED, () => syncAudioTracks());
       hlsInstance.on(Hls.Events.ERROR, (_, data) => {
         if (data?.fatal) {
-          showToast('HLS stream failed. Please select another source manually.', 'error');
+          if (!tryNextSource('HLS stream')) {
+            showToast('HLS stream failed. Please select another source manually.', 'error');
+          }
         }
       });
       return;
     }
   }
   playerEl.src = sourceItem.url;
-  playerEl.play().catch(() => {});
+  if (plyrInstance) {
+    plyrInstance.play().catch(() => {});
+  } else {
+    playerEl.play().catch(() => {});
+  }
 }
 
 function renderSubtitleResults() {
@@ -305,6 +412,9 @@ async function attachSubtitle(index) {
     track.default = true;
     track.addEventListener('load', () => {
       if (track.track) track.track.mode = 'showing';
+      if (plyrInstance) {
+        plyrInstance.currentTrack = Array.from(playerEl.textTracks).findIndex((item) => item === track.track);
+      }
     });
     playerEl.appendChild(track);
     showToast(`Subtitle loaded: ${sub.display || sub.language || 'Unknown'}`);
@@ -356,6 +466,23 @@ function renderAndPlay() {
   playSelectedSource(selected);
 }
 
+function playSourceAt(index) {
+  const order = buildSourceOrder();
+  if (!order.length) return false;
+  if (index < 0 || index >= order.length) return false;
+  sourceCursor = index;
+  playSelectedSource(order[index]);
+  return true;
+}
+
+function tryNextSource(reason = 'Stream') {
+  const ok = playSourceAt(sourceCursor + 1);
+  if (ok) {
+    showToast(`${reason} failed, trying another source...`, 'error');
+  }
+  return ok;
+}
+
 function renderEpisodeList(episodes) {
   episodeListEl.innerHTML = '';
   epCountEl.textContent = `${episodes.length} Episodes`;
@@ -370,7 +497,7 @@ function renderEpisodeList(episodes) {
 }
 
 async function loadEpisodeSource() {
-  try {
+  const fetchSource = async (providerId, seaProviderId) => {
     const response = await fetch('/api/onlinestream/episode-source', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -378,24 +505,59 @@ async function loadEpisodeSource() {
         mediaId: Number(animeId),
         episodeNumber: selectedEpisode,
         source,
-        provider: selectedProvider,
-        seaProvider: selectedSeaProvider || undefined
+        provider: providerId,
+        server: selectedServer || undefined,
+        seaProvider: seaProviderId || undefined
       })
     });
     const payload = await parseApiJson(response);
     if (!response.ok) {
       throw new Error(payload?.error || 'Failed to load episode source');
     }
-    currentSources = payload.videoSources || [];
-    if (!currentSources.length) {
+    if (!Array.isArray(payload?.videoSources) || !payload.videoSources.length) {
       throw new Error('No stream sources returned');
     }
+    return payload;
+  };
+
+  try {
+    const payload = await fetchSource(selectedProvider, selectedSeaProvider);
+    currentSources = payload.videoSources || [];
     if (payload?.debug?.providerUsed) {
       showToast(`Sea source: ${payload.debug.providerUsed}`);
     }
     sourceCursor = 0;
     renderAndPlay();
   } catch (error) {
+    const fallbackAttempts = [];
+
+    if (selectedProvider === 'seanime' && selectedSeaProvider) {
+      fallbackAttempts.push({ providerId: 'seanime', seaProviderId: '' });
+    }
+
+    availableProviderIds
+      .filter((id) => id !== selectedProvider)
+      .forEach((id) => fallbackAttempts.push({ providerId: id, seaProviderId: '' }));
+
+    for (const attempt of fallbackAttempts) {
+      try {
+        const payload = await fetchSource(attempt.providerId, attempt.seaProviderId);
+        selectedProvider = attempt.providerId;
+        selectedSeaProvider = attempt.seaProviderId || '';
+        providerSelectEl.value = selectedProvider;
+        await loadSeaProviders();
+        updateUrlParams({
+          provider: selectedProvider,
+          seaProvider: selectedProvider === 'seanime' ? (selectedSeaProvider || null) : null
+        });
+        currentSources = payload.videoSources || [];
+        sourceCursor = 0;
+        renderAndPlay();
+        showToast(`Switched to provider: ${selectedProvider}`);
+        return;
+      } catch (_) {}
+    }
+
     console.error(error);
     showToast(error.message || 'Failed to load video stream', 'error');
   }
@@ -518,8 +680,49 @@ async function parseApiJson(response) {
   }
 }
 
+function isTypingContext(target) {
+  if (!target || !(target instanceof HTMLElement)) return false;
+  const tag = target.tagName.toLowerCase();
+  return tag === 'input' || tag === 'textarea' || tag === 'select' || target.isContentEditable;
+}
+
+function seekBy(deltaSeconds) {
+  const playerEl = getPlayerEl();
+  if (!playerEl) return;
+  const current = Number.isFinite(playerEl.currentTime) ? playerEl.currentTime : 0;
+  const duration = Number.isFinite(playerEl.duration) ? playerEl.duration : Number.POSITIVE_INFINITY;
+  const next = Math.max(0, Math.min(duration, current + deltaSeconds));
+  playerEl.currentTime = next;
+}
+
+function toggleCaptionsShortcut() {
+  const playerEl = getPlayerEl();
+  if (!playerEl || !playerEl.textTracks || playerEl.textTracks.length === 0) {
+    showToast('No captions available', 'error');
+    return;
+  }
+
+  if (plyrInstance && typeof plyrInstance.currentTrack === 'number') {
+    const next = plyrInstance.currentTrack === -1 ? 0 : -1;
+    plyrInstance.currentTrack = next;
+    showToast(next === -1 ? 'Captions off' : 'Captions on');
+    return;
+  }
+
+  const first = playerEl.textTracks[0];
+  const on = first.mode !== 'showing';
+  for (let i = 0; i < playerEl.textTracks.length; i += 1) {
+    playerEl.textTracks[i].mode = 'disabled';
+  }
+  first.mode = on ? 'showing' : 'disabled';
+  showToast(on ? 'Captions on' : 'Captions off');
+}
+
 async function init() {
   try {
+    if (!window.Plyr) {
+      showToast('Advanced player library failed to load. Check network filters.', 'error');
+    }
     if (subtitlePanelEl && window.innerWidth > 820) {
       subtitlePanelEl.classList.add('open');
     }
@@ -542,13 +745,42 @@ async function init() {
     const providers = await parseApiJson(pRes);
     providerSelectEl.innerHTML = providers.map(p => `<option value="${p.id}">Provider: ${p.name}</option>`).join('');
     const providerIds = providers.map((p) => p.id);
+    availableProviderIds = providerIds.slice();
+
+    // Backward compatibility:
+    // If URL has provider=seanime with seaProvider equal to a first-class provider id
+    // (e.g. animesaturn), switch to the direct provider automatically.
+    if (
+      selectedProvider === 'seanime' &&
+      selectedSeaProvider &&
+      selectedSeaProvider !== 'seanime' &&
+      providerIds.includes(selectedSeaProvider)
+    ) {
+      selectedProvider = selectedSeaProvider;
+      selectedSeaProvider = '';
+      updateUrlParams({ provider: selectedProvider, seaProvider: null });
+    }
+
     if (!providerIds.includes(selectedProvider)) {
       selectedProvider = providerIds.includes('seanime') ? 'seanime' : (providerIds[0] || 'seanime');
+    }
+    if (selectedProvider === 'animesaturn' && providerIds.includes('seanime')) {
+      selectedProvider = 'seanime';
+      selectedSeaProvider = '';
     }
     providerSelectEl.value = selectedProvider;
     updateUrlParams({ provider: selectedProvider });
 
     await loadSeaProviders();
+    if (selectedProvider === 'seanime') {
+      const seaIds = availableSeaProviders.map((item) => String(item.id || '').toLowerCase());
+      const preferredSea = ['hianime', 'zoro', 'anicrush'].find((id) => seaIds.includes(id)) || '';
+      if ((!selectedSeaProvider || !seaIds.includes(selectedSeaProvider)) && preferredSea) {
+        selectedSeaProvider = preferredSea;
+        seaProviderSelectEl.value = selectedSeaProvider;
+        updateUrlParams({ seaProvider: selectedSeaProvider });
+      }
+    }
     await loadEpisodeList();
     await searchSubtitles();
     setupQuickSearch();
@@ -580,6 +812,13 @@ qualitySelectEl.addEventListener('change', () => {
     renderAndPlay();
 });
 
+audioSelectEl?.addEventListener('change', () => {
+    if (!hlsInstance) return;
+    const next = Number(audioSelectEl.value);
+    if (!Number.isInteger(next) || next < 0) return;
+    hlsInstance.audioTrack = next;
+});
+
 subtitleSearchBtn?.addEventListener('click', searchSubtitles);
 subtitleListEl?.addEventListener('click', (event) => {
     const btn = event.target.closest('button[data-sub-index]');
@@ -587,6 +826,35 @@ subtitleListEl?.addEventListener('click', (event) => {
     const index = Number(btn.dataset.subIndex);
     if (Number.isNaN(index)) return;
     attachSubtitle(index);
+});
+
+document.addEventListener('keydown', (event) => {
+    if (isTypingContext(event.target)) return;
+    const key = String(event.key || '').toLowerCase();
+    if (key === 'arrowleft') {
+      event.preventDefault();
+      seekBy(-5);
+      return;
+    }
+    if (key === 'arrowright') {
+      event.preventDefault();
+      seekBy(5);
+      return;
+    }
+    if (key === 'j') {
+      event.preventDefault();
+      seekBy(-10);
+      return;
+    }
+    if (key === 'l') {
+      event.preventDefault();
+      seekBy(10);
+      return;
+    }
+    if (key === 'c') {
+      event.preventDefault();
+      toggleCaptionsShortcut();
+    }
 });
 
 init();
