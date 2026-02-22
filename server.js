@@ -56,6 +56,30 @@ function rewriteM3u8ToProxy(manifestText, baseUrl, provider) {
     .join('\n');
 }
 
+async function fetchWithHeaderPreservingRedirects(url, headers, maxRedirects = 5) {
+  let currentUrl = String(url || '');
+  for (let i = 0; i <= maxRedirects; i += 1) {
+    const response = await fetch(currentUrl, {
+      method: 'GET',
+      headers,
+      redirect: 'manual'
+    });
+
+    if (![301, 302, 303, 307, 308].includes(response.status)) {
+      return response;
+    }
+
+    const location = String(response.headers.get('location') || '').trim();
+    if (!location) {
+      return response;
+    }
+
+    currentUrl = new URL(location, currentUrl).toString();
+  }
+
+  throw new Error('Too many upstream redirects');
+}
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -704,10 +728,7 @@ app.get('/api/onlinestream/proxy', async (req, res) => {
   }
 
   try {
-    const upstream = await fetch(target.toString(), {
-      method: 'GET',
-      headers: requestHeaders
-    });
+    const upstream = await fetchWithHeaderPreservingRedirects(target.toString(), requestHeaders);
 
     if (!upstream.ok && upstream.status !== 206) {
       const text = await upstream.text().catch(() => '');

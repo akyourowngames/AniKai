@@ -278,20 +278,30 @@ async function resolveVideoSources(movieId, episodeNumber, dubbed, preferredServ
         }));
 
       const rawSources = Array.isArray(decryptData?.sources) ? decryptData.sources : [];
-      const chosen =
-        rawSources.find((s) => String(s?.type || '').toLowerCase() === 'hls') ||
-        rawSources.find((s) => String(s?.type || '').toLowerCase() === 'mp4') ||
-        rawSources[0];
+      const dedupSourceUrls = new Set();
+      const preferredRawSources = [
+        ...rawSources.filter((s) => String(s?.type || '').toLowerCase() === 'hls'),
+        ...rawSources.filter((s) => String(s?.type || '').toLowerCase() === 'mp4'),
+        ...rawSources.filter((s) => {
+          const t = String(s?.type || '').toLowerCase();
+          return t !== 'hls' && t !== 'mp4';
+        })
+      ];
 
-      if (chosen?.file) {
-        const type = String(chosen?.type || '').toLowerCase();
+      preferredRawSources.forEach((src, idx) => {
+        const file = String(src?.file || '').trim();
+        if (!file || dedupSourceUrls.has(file)) return;
+        dedupSourceUrls.add(file);
+        const type = String(src?.type || '').toLowerCase();
         const normalizedType = type === 'hls' ? 'm3u8' : (type || 'unknown');
+        const quality = String(src?.label || src?.quality || '').trim() || 'auto';
         outputSources.push({
           server,
-          url: chosen.file,
+          url: file,
           label: `AniCrush ${server}`,
-          quality: 'auto',
+          quality,
           type: normalizedType,
+          sourceIndex: idx,
           subtitles,
           headers: {
             Referer: 'https://megacloud.club/',
@@ -300,7 +310,7 @@ async function resolveVideoSources(movieId, episodeNumber, dubbed, preferredServ
               'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36'
           }
         });
-      }
+      });
 
       outputSources.push({
         server,

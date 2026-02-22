@@ -384,10 +384,12 @@ function buildSourceOrder() {
   if (!primary.length) return [];
 
   const rankPool = (pool) => {
-    const exact = pool.filter((item) => item.quality === selectedQuality);
-    const auto = pool.filter((item) => item.quality === 'auto');
-    const rest = pool.filter((item) => item.quality !== selectedQuality && item.quality !== 'auto');
-    return [...exact, ...auto, ...rest];
+    const nonEmbed = pool.filter((item) => item.type !== 'embed');
+    const embed = pool.filter((item) => item.type === 'embed');
+    const exact = nonEmbed.filter((item) => item.quality === selectedQuality);
+    const auto = nonEmbed.filter((item) => item.quality === 'auto');
+    const rest = nonEmbed.filter((item) => item.quality !== selectedQuality && item.quality !== 'auto');
+    return [...exact, ...auto, ...rest, ...embed];
   };
 
   const ranked = [...rankPool(primary), ...rankPool(fallbackPool)];
