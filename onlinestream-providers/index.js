@@ -5,14 +5,7 @@ const hianimeProvider = require('./hianime');
 const sudatchiProvider = require('./sudatchi');
 const anizoneProvider = require('./anizone');
 const uniquestreamProvider = require('./uniquestream');
-
-// Consumet is optional — @consumet/extensions may fail on some hosts (Vercel, etc.)
-let consumetProvider = null;
-try {
-  consumetProvider = require('./consumet');
-} catch (e) {
-  console.warn('[providers] Consumet provider failed to load:', e.message);
-}
+const consumetProvider = require('./consumet');
 
 const providers = new Map([
   [seanimeProvider.id, seanimeProvider],
@@ -22,7 +15,7 @@ const providers = new Map([
   [sudatchiProvider.id, sudatchiProvider],
   [anizoneProvider.id, anizoneProvider],
   [uniquestreamProvider.id, uniquestreamProvider],
-  ...(consumetProvider ? [[consumetProvider.id, consumetProvider]] : [])
+  [consumetProvider.id, consumetProvider]
 ]);
 
 function listProviders() {
