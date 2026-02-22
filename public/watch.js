@@ -240,7 +240,7 @@ function resetPlayerHost() {
     hlsInstance.destroy();
     hlsInstance = null;
   }
-  playerHostEl.innerHTML = '<video id="player" controls playsinline></video>';
+  playerHostEl.innerHTML = '<video id="player" controls playsinline crossorigin="anonymous"></video>';
   return playerHostEl.querySelector('#player');
 }
 
@@ -264,9 +264,10 @@ function attachProviderSubtitles(playerEl, sourceItem) {
   subtitles.forEach((sub, index) => {
     const subUrl = String(sub?.url || '').trim();
     if (!subUrl) return;
+    // Keep subtitle tracks same-origin to avoid browser track-frame origin restrictions.
     const proxiedSubUrl = subUrl.startsWith('/api/subtitles/file')
-      ? withStreamApiBase(subUrl)
-      : withStreamApiBase(`/api/subtitles/file?url=${encodeURIComponent(subUrl)}&format=${encodeURIComponent(String(sub?.format || ''))}`);
+      ? subUrl
+      : `/api/subtitles/file?url=${encodeURIComponent(subUrl)}&format=${encodeURIComponent(String(sub?.format || ''))}`;
     const track = document.createElement('track');
     track.dataset.anikaiSub = '1';
     track.dataset.anikaiProviderSub = '1';
