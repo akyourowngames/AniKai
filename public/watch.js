@@ -672,6 +672,29 @@ async function loadEpisodeList() {
 }
 
 async function loadSeaProviders() {
+  // ── Consumet provider: show sub-provider picker (HiAnime / AnimeKai / AnimePahe) ──
+  if (selectedProvider === 'consumet') {
+    seaProviderSelectEl.style.display = '';
+    const consumetSubProviders = [
+      { id: 'hianime', name: 'Consumet: HiAnime (default, best subs)' },
+      { id: 'animekai', name: 'Consumet: AnimeKai (dub support)' },
+      { id: 'animepahe', name: 'Consumet: AnimePahe (good quality)' }
+    ];
+    seaProviderSelectEl.innerHTML = consumetSubProviders
+      .map((item) => `<option value="${item.id}">${item.name}</option>`)
+      .join('');
+
+    const ids = consumetSubProviders.map((p) => p.id);
+    if (!ids.includes(selectedSeaProvider)) {
+      selectedSeaProvider = 'hianime'; // default
+    }
+    seaProviderSelectEl.value = selectedSeaProvider;
+    updateUrlParams({ seaProvider: selectedSeaProvider });
+    renderDubOption();
+    return;
+  }
+
+  // ── Seanime provider: fetch available sea sources ──
   if (selectedProvider !== 'seanime') {
     seaProviderSelectEl.style.display = 'none';
     renderDubOption();

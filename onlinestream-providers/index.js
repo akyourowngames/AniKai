@@ -5,6 +5,7 @@ const hianimeProvider = require('./hianime');
 const sudatchiProvider = require('./sudatchi');
 const anizoneProvider = require('./anizone');
 const uniquestreamProvider = require('./uniquestream');
+const consumetProvider = require('./consumet');
 
 const providers = new Map([
   [seanimeProvider.id, seanimeProvider],
@@ -13,7 +14,8 @@ const providers = new Map([
   [hianimeProvider.id, hianimeProvider],
   [sudatchiProvider.id, sudatchiProvider],
   [anizoneProvider.id, anizoneProvider],
-  [uniquestreamProvider.id, uniquestreamProvider]
+  [uniquestreamProvider.id, uniquestreamProvider],
+  [consumetProvider.id, consumetProvider]   // NEW: CF-resilient via @consumet/extensions
 ]);
 
 function listProviders() {
