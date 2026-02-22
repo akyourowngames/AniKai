@@ -1,190 +1,204 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Watch Anime - Anikai</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="/vendor/plyr/plyr.css" />
-    <link rel="stylesheet" href="styles.css" />
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script src="/vendor/plyr/plyr.polyfilled.min.js"></script>
-  </head>
-  <body class="watch-page">
-    <!-- Sidebar -->
-    <aside id="sidebar" class="sidebar">
-      <div class="logo-area">
-        <a href="/" class="logo">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-            <path d="M12 2L2 22h20L12 2zm0 3.5L18.5 20H5.5L12 5.5z"/>
-          </svg>
-          <span>ANIKAI</span>
-        </a>
-      </div>
-      <div class="sidebar-scroll">
-        <div class="sidebar-section">
-          <nav class="sidebar-nav">
-            <a href="/" class="nav-link">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-              </svg>
-              <span>Home</span>
-            </a>
-            <a href="/#trending" class="nav-link">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
-              </svg>
-              <span>Trending</span>
-            </a>
-          </nav>
-        </div>
-      </div>
-    </aside>
 
-    <div class="content-wrapper">
-      <!-- Top Bar -->
-      <header class="top-bar">
-        <button id="sidebarToggle" class="icon-btn">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-          </svg>
-        </button>
-        <div class="search-wrapper">
-          <div class="search-input-box">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Watch Anime - Anikai</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="/vendor/plyr/plyr.css" />
+  <link rel="stylesheet" href="styles.css?v=20260221-3" />
+  <link rel="stylesheet" href="features.css" />
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script src="/vendor/plyr/plyr.polyfilled.min.js"></script>
+</head>
+
+<body class="watch-page">
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar">
+    <div class="logo-area">
+      <a href="/" class="logo">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+          <path d="M12 2L2 22h20L12 2zm0 3.5L18.5 20H5.5L12 5.5z" />
+        </svg>
+        <span>ANIKAI</span>
+      </a>
+    </div>
+    <div class="sidebar-scroll">
+      <div class="sidebar-section">
+        <nav class="sidebar-nav">
+          <a href="/" class="nav-link">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
             </svg>
-            <input id="searchInput" type="text" placeholder="Quick search..." autocomplete="off" />
-          </div>
-          <div id="searchResults" class="search-results"></div>
+            <span>Home</span>
+          </a>
+          <a href="/#trending" class="nav-link">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+            </svg>
+            <span>Trending</span>
+          </a>
+        </nav>
+      </div>
+    </div>
+  </aside>
+
+  <div class="content-wrapper">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <button id="sidebarToggle" class="icon-btn">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+      <div class="search-wrapper">
+        <div class="search-input-box">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input id="searchInput" type="text" placeholder="Quick search..." autocomplete="off" />
         </div>
-      </header>
+        <div id="searchResults" class="search-results"></div>
+      </div>
+    </header>
 
-      <main class="watch-container">
-        <div class="watch-grid">
-          <div class="player-column">
-            <!-- Video Player -->
-            <div id="playerHost" class="video-wrapper-premium">
-              <video id="player" controls playsinline></video>
-            </div>
-
-            <!-- Player Controls Bar -->
-            <div class="player-controls-bar">
-              <div class="action-group">
-                <button id="prevEpBtn" class="btn-action">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-                  Prev
-                </button>
-                <button id="nextEpBtn" class="btn-action">
-                  Next
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
-                </button>
-              </div>
-              <div class="action-group">
-                <button id="subtitlePanelToggle" class="btn-action" title="Subtitle Panel">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="5" width="18" height="14" rx="2"></rect>
-                    <path d="M7 10h10M7 14h7"></path>
-                  </svg>
-                  Subtitles
-                </button>
-                <button id="theaterBtn" class="btn-action" title="Theater Mode">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/></svg>
-                  Theater
-                </button>
-              </div>
-            </div>
-
-            <div id="subtitlePanel" class="subtitles-box player-subtitles-box">
-              <div class="subtitles-head">
-                <span>Subtitles</span>
-                <button id="subtitleSearchBtn" class="subtitle-search-btn" type="button">Find</button>
-              </div>
-              <div class="subtitles-row">
-                <select id="subtitleLanguage">
-                  <option value="all">Language: All</option>
-                  <option value="en">Language: English</option>
-                  <option value="es">Language: Spanish</option>
-                  <option value="fr">Language: French</option>
-                  <option value="de">Language: German</option>
-                  <option value="it">Language: Italian</option>
-                  <option value="pt">Language: Portuguese</option>
-                  <option value="ja">Language: Japanese</option>
-                  <option value="ar">Language: Arabic</option>
-                  <option value="ru">Language: Russian</option>
-                </select>
-                <select id="subtitleFormat">
-                  <option value="all">Format: All</option>
-                  <option value="vtt">Format: VTT</option>
-                  <option value="srt">Format: SRT</option>
-                  <option value="ass">Format: ASS</option>
-                </select>
-              </div>
-              <label class="subtitle-hi">
-                <input id="subtitleHi" type="checkbox" />
-                <span>CC / Hearing Impaired</span>
-              </label>
-              <div id="subtitleList" class="subtitle-list"></div>
-            </div>
-
-            <!-- Anime Info Section -->
-            <section class="anime-details-premium">
-              <img id="animePoster" class="info-poster" src="" alt="Poster" />
-              <div class="info-content">
-                <h1 id="animeTitle" class="info-title">Loading...</h1>
-                <div id="animeMeta" class="info-meta-pills">
-                  <!-- Pills will be rendered here -->
-                </div>
-                <p id="animeDesc" class="info-desc"></p>
-              </div>
-            </section>
+    <main class="watch-container">
+      <div class="watch-grid">
+        <div class="player-column">
+          <!-- Video Player -->
+          <div id="playerHost" class="video-wrapper-premium">
+            <video id="player" controls playsinline></video>
           </div>
 
-          <!-- Sidebar -->
-          <aside class="ep-sidebar-premium">
-            <div class="ep-header-premium">
-              <h3>Episodes</h3>
-              <span id="epCount" class="ep-count">0/0</span>
+          <!-- Player Controls Bar -->
+          <div class="player-controls-bar">
+            <div class="action-group">
+              <button id="prevEpBtn" class="btn-action">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                  <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
+                </svg>
+                Prev
+              </button>
+              <button id="nextEpBtn" class="btn-action">
+                Next
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                  <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+                </svg>
+              </button>
             </div>
-            
-            <div class="ep-tools-premium">
-              <select id="providerSelect"></select>
-              <select id="seaProviderSelect"></select>
-              <select id="serverSelect"></select>
-              <select id="qualitySelect"></select>
-              <select id="audioSelect">
-                <option value="">Audio: Default</option>
+            <div class="action-group">
+              <button id="subtitlePanelToggle" class="btn-action" title="Subtitle Panel">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                  <path d="M7 10h10M7 14h7"></path>
+                </svg>
+                Subtitles
+              </button>
+              <button id="theaterBtn" class="btn-action" title="Theater Mode">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                  <path d="M2 10h20" />
+                </svg>
+                Theater
+              </button>
+            </div>
+          </div>
+
+          <div id="subtitlePanel" class="subtitles-box player-subtitles-box">
+            <div class="subtitles-head">
+              <span>Subtitles</span>
+              <button id="subtitleSearchBtn" class="subtitle-search-btn" type="button">Find</button>
+            </div>
+            <div class="subtitles-row">
+              <select id="subtitleLanguage">
+                <option value="all">Language: All</option>
+                <option value="en">Language: English</option>
+                <option value="es">Language: Spanish</option>
+                <option value="fr">Language: French</option>
+                <option value="de">Language: German</option>
+                <option value="it">Language: Italian</option>
+                <option value="pt">Language: Portuguese</option>
+                <option value="ja">Language: Japanese</option>
+                <option value="ar">Language: Arabic</option>
+                <option value="ru">Language: Russian</option>
+              </select>
+              <select id="subtitleFormat">
+                <option value="all">Format: All</option>
+                <option value="vtt">Format: VTT</option>
+                <option value="srt">Format: SRT</option>
+                <option value="ass">Format: ASS</option>
               </select>
             </div>
+            <label class="subtitle-hi">
+              <input id="subtitleHi" type="checkbox" />
+              <span>CC / Hearing Impaired</span>
+            </label>
+            <div id="subtitleList" class="subtitle-list"></div>
+          </div>
 
-            <div class="ep-scroll-premium">
-              <div id="episodeList" class="ep-grid-premium">
-                <!-- Episodes -->
+          <!-- Anime Info Section -->
+          <section class="anime-details-premium">
+            <img id="animePoster" class="info-poster" src="" alt="Poster" />
+            <div class="info-content">
+              <h1 id="animeTitle" class="info-title">Loading...</h1>
+              <div id="animeMeta" class="info-meta-pills">
+                <!-- Pills will be rendered here -->
               </div>
+              <p id="animeDesc" class="info-desc"></p>
             </div>
-          </aside>
+          </section>
         </div>
-      </main>
-    </div>
 
-    <template id="searchResultTemplate">
-      <a href="#" class="search-item">
-        <img class="search-poster" />
-        <div class="search-info">
-          <div class="search-title"></div>
-          <div class="search-meta"></div>
-        </div>
-      </a>
-    </template>
+        <!-- Sidebar -->
+        <aside class="ep-sidebar-premium">
+          <div class="ep-header-premium">
+            <h3>Episodes</h3>
+            <span id="epCount" class="ep-count">0/0</span>
+          </div>
 
-    <script src="watch.js"></script>
-  </body>
+          <div class="ep-tools-premium">
+            <select id="providerSelect"></select>
+            <select id="seaProviderSelect"></select>
+            <select id="dubSelect">
+              <option value="sub">Language: Sub</option>
+              <option value="dub">Language: Dub</option>
+            </select>
+            <select id="serverSelect"></select>
+            <select id="qualitySelect"></select>
+            <select id="audioSelect">
+              <option value="">Audio: Default</option>
+            </select>
+          </div>
+
+          <div class="ep-scroll-premium">
+            <div id="episodeList" class="ep-grid-premium">
+              <!-- Episodes -->
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <template id="searchResultTemplate">
+    <a href="#" class="search-item">
+      <img class="search-poster" />
+      <div class="search-info">
+        <div class="search-title"></div>
+        <div class="search-meta"></div>
+      </div>
+    </a>
+  </template>
+
+  <script src="features.js"></script>
+  <script src="watch.js?v=20260221-3"></script>
+</body>
+
 </html>

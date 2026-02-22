@@ -457,6 +457,7 @@ body.collapsed .content-wrapper { margin-left: var(--sidebar-collapsed-width); }
 .watch-page .ep-tools-premium { padding: 1rem; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.75rem; }
 .watch-page select { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); padding: 0.6rem; border-radius: 8px; font-size: 0.85rem; cursor: pointer; }
 #audioSelect { display: none; }
+#dubSelect { display: block; }
 .watch-page .subtitles-box {
   margin-top: 0.2rem;
   border: 1px solid var(--border);
@@ -723,3 +724,6 @@ body.theater-mode .content-wrapper { margin: 0; }
   .watch-page .ep-header-premium { padding: 1rem 0.85rem; }
   .watch-page .ep-count { font-size: 0.7rem; }
 }
+
+/* ============================================================ ANIKAI FEATURES ============================================================ */
+

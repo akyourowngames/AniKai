@@ -146,12 +146,12 @@ function toggleWatchList(e, anime) {
   }
   localStorage.setItem('watchList', JSON.stringify(watchList));
   renderWatchList();
-  
+
   // Update button state if visible
   const btn = e.target.closest('.card-action-btn');
   if (btn) {
     btn.classList.toggle('active');
-    btn.innerHTML = index > -1 
+    btn.innerHTML = index > -1
       ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>'
       : '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
   }
@@ -181,7 +181,7 @@ myListLink.addEventListener('click', (e) => {
 function loadContinueWatching() {
   const history = JSON.parse(localStorage.getItem('watchHistory')) || {};
   const ids = Object.keys(history).sort((a, b) => history[b].timestamp - history[a].timestamp).slice(0, 4);
-  
+
   if (ids.length === 0) {
     continueSection.style.display = 'none';
     return;
@@ -189,7 +189,7 @@ function loadContinueWatching() {
 
   continueGrid.innerHTML = '';
   const items = catalog.filter(a => ids.includes(String(a.id)));
-  
+
   if (items.length > 0) {
     continueSection.style.display = 'block';
     renderGrid(continueGrid, items, true);
@@ -201,7 +201,7 @@ let searchTimeout;
 searchInput.addEventListener('input', (e) => {
   clearTimeout(searchTimeout);
   const term = e.target.value.trim().toLowerCase();
-  
+
   if (!term) {
     searchResults.classList.remove('active');
     return;
@@ -247,6 +247,7 @@ randomBtn.addEventListener('click', (e) => {
 // --- Render Logic ---
 function renderGrid(container, items, isHistory = false) {
   if (!items.length) return;
+  const F = window.AnikaiFeatures;
 
   items.forEach((anime, index) => {
     const cardNode = cardTemplate.content.cloneNode(true);
@@ -256,7 +257,7 @@ function renderGrid(container, items, isHistory = false) {
 
     img.src = poster;
     img.alt = anime.title;
-    
+
     // Watch List Button
     const actionBtn = card.querySelector('.card-action-btn');
     const inList = watchList.some(i => i.id === anime.id);
@@ -268,19 +269,26 @@ function renderGrid(container, items, isHistory = false) {
 
     card.querySelector('.card-title').textContent = anime.title;
     card.querySelector('.card-title').title = anime.title;
-    
+
     if (anime.episodeCount) {
-        card.querySelector('.tag-eps').textContent = `EP ${anime.episodeCount}`;
+      card.querySelector('.tag-eps').textContent = `EP ${anime.episodeCount}`;
     }
 
     if (isHistory) {
-       const history = JSON.parse(localStorage.getItem('watchHistory')) || {};
-       const progress = history[anime.id];
-       card.querySelector('.card-meta').textContent = `Ep ${progress?.episode || 1}`;
-       card.href = `/watch.html?id=${anime.id}&episode=${progress?.episode || 1}&source=${source}`;
+      const history = JSON.parse(localStorage.getItem('watchHistory')) || {};
+      const progress = history[anime.id];
+      card.querySelector('.card-meta').textContent = `Ep ${progress?.episode || 1}`;
+      card.href = `/watch.html?id=${anime.id}&episode=${progress?.episode || 1}&source=${source}`;
     } else {
-       card.querySelector('.card-meta').textContent = `${anime.year || 'N/A'} • ${anime.genres[0] || 'Unknown'}`;
-       card.href = `/watch.html?id=${anime.id}&source=${source}`;
+      card.querySelector('.card-meta').textContent = `${anime.year || 'N/A'} • ${anime.genres[0] || 'Unknown'}`;
+      card.href = `/watch.html?id=${anime.id}&source=${source}`;
+    }
+
+    // ── FEATURES: store data ref, attach More Info btn + progress bar ──
+    card._animeData = anime;
+    if (F) {
+      F.addMoreInfoBtn(card, anime);
+      F.addProgressBar(card, anime.id);
     }
 
     card.classList.add('reveal-item');
@@ -294,7 +302,7 @@ function renderTopList(items) {
   items.slice(0, 10).forEach((anime, index) => {
     const listNode = listTemplate.content.cloneNode(true);
     const item = listNode.querySelector('.list-item');
-    
+
     item.querySelector('.list-rank').textContent = (index + 1).toString().padStart(2, '0');
     item.querySelector('.list-img').src = anime.poster;
     item.querySelector('.list-title').textContent = anime.title;
@@ -305,29 +313,54 @@ function renderTopList(items) {
   });
 }
 
-function renderCatalogSections() {
+function renderCatalogSections(filtered) {
   latestGrid.innerHTML = '';
   animeGrid.innerHTML = '';
   topList.innerHTML = '';
   renderedLatestIds.clear();
   renderedTrendingIds.clear();
 
-  if (!catalog.length) {
+  const src = filtered || catalog;
+  if (!src.length) {
+    if (filtered) {
+      latestGrid.innerHTML = '<div style="padding:2rem;color:var(--text-dim);grid-column:1/-1;">No anime found for this filter.</div>';
+    }
     return;
   }
 
-  renderHero(catalog[0]);
-  renderTrendingCarousel(catalog.slice(0, 5));
-  const latestItems = catalog.slice(0, MAX_LATEST_VISIBLE);
-  const trendingItems = catalog.slice(MAX_LATEST_VISIBLE, MAX_TRENDING_VISIBLE);
+  // Sync full catalog to features module for filtering
+  if (!filtered && window.AnikaiFeatures) {
+    window.AnikaiFeatures.setFullCatalog(catalog);
+  }
+
+  renderHero(src[0]);
+  renderTrendingCarousel(src.slice(0, 5));
+  const latestItems = src.slice(0, MAX_LATEST_VISIBLE);
+  const trendingItems = src.slice(MAX_LATEST_VISIBLE, MAX_TRENDING_VISIBLE);
   renderGrid(latestGrid, latestItems);
   renderGrid(animeGrid, trendingItems);
   latestItems.forEach((anime) => renderedLatestIds.add(String(anime.id)));
   trendingItems.forEach((anime) => renderedTrendingIds.add(String(anime.id)));
-  renderTopList(catalog.slice(0, 10));
-  loadContinueWatching();
-  renderWatchList();
+  renderTopList(src.slice(0, 10));
+  if (!filtered) {
+    loadContinueWatching();
+    renderWatchList();
+  }
 }
+
+// Filter re-render hook (called by features.js)
+function rerenderFromFilter() {
+  if (!window.AnikaiFeatures) return;
+  const filtered = window.AnikaiFeatures.getFilteredCatalog();
+  const hasFilter = window.AnikaiFeatures.activeGenreFilter ||
+    window.AnikaiFeatures.activeYearFilter ||
+    window.AnikaiFeatures.activeTypeFilter;
+  renderCatalogSections(hasFilter ? filtered : null);
+}
+window.rerenderFromFilter = rerenderFromFilter;
+
+// Expose watchList render for features.js
+window.renderWatchListGlobal = () => renderWatchList();
 
 function renderTrendingCarousel(items) {
   if (!trendingCarousel) return;
@@ -462,6 +495,11 @@ async function loadCatalog() {
     mergeCatalogChunk(Array.isArray(firstPage) ? firstPage : []);
     renderCatalogSections();
     setCatalogSyncStatus(`Syncing library... ${catalog.length} titles`);
+    // Init Netflix-like features after first data load
+    if (window.AnikaiFeatures) {
+      window.AnikaiFeatures.setFullCatalog(catalog);
+      window.AnikaiFeatures.initHomeFeatures();
+    }
     loadCatalogInBackground(2);
   } catch (error) {
     console.error(error);
@@ -502,7 +540,7 @@ loadCatalog();
     if (status?.configured && anilistAuthStatus) {
       anilistAuthStatus.textContent = `Configured on website backend. Saved at: ${status.savedAt || 'unknown'}`;
     }
-  } catch (_) {}
+  } catch (_) { }
 })();
 
 document.addEventListener('mousemove', (e) => {
@@ -514,3 +552,21 @@ document.addEventListener('mousemove', (e) => {
   hero.style.setProperty('--hero-shift-x', `${x}px`);
   hero.style.setProperty('--hero-shift-y', `${y}px`);
 });
+
+// ── Hero share button ────────────────────────────────────────
+(function injectHeroShareBtn() {
+  const heroSection = document.querySelector('.hero-section');
+  if (!heroSection) return;
+  const shareBtn = document.createElement('button');
+  shareBtn.className = 'hero-share-btn';
+  shareBtn.title = 'Share current anime';
+  shareBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`;
+  shareBtn.addEventListener('click', () => {
+    const url = heroWatchBtn?.href;
+    if (!url) return;
+    const F = window.AnikaiFeatures;
+    if (F) F.copyToClipboard(url, 'Anime link copied!');
+  });
+  const content = heroSection.querySelector('.hero-content');
+  if (content) content.appendChild(shareBtn);
+})();

@@ -2,12 +2,18 @@ const seanimeProvider = require('./seanime');
 const animesaturnProvider = require('./animesaturn');
 const anicrushProvider = require('./anicrush');
 const hianimeProvider = require('./hianime');
+const sudatchiProvider = require('./sudatchi');
+const anizoneProvider = require('./anizone');
+const uniquestreamProvider = require('./uniquestream');
 
 const providers = new Map([
   [seanimeProvider.id, seanimeProvider],
   [anicrushProvider.id, anicrushProvider],
   [animesaturnProvider.id, animesaturnProvider],
-  [hianimeProvider.id, hianimeProvider]
+  [hianimeProvider.id, hianimeProvider],
+  [sudatchiProvider.id, sudatchiProvider],
+  [anizoneProvider.id, anizoneProvider],
+  [uniquestreamProvider.id, uniquestreamProvider]
 ]);
 
 function listProviders() {

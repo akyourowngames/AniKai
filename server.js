@@ -537,7 +537,13 @@ app.post('/api/onlinestream/episode-source', async (req, res) => {
         }
         const sourceType = String(item?.type || '').toLowerCase();
         const isEmbeddable = sourceType === 'embed' || sourceType === 'youtube';
-        const needsProxy = !isEmbeddable && (provider.id === 'animesaturn' || provider.id === 'anicrush');
+        const needsProxy = !isEmbeddable && (
+          provider.id === 'animesaturn' ||
+          provider.id === 'anicrush' ||
+          provider.id === 'sudatchi' ||
+          provider.id === 'anizone' ||
+          provider.id === 'uniquestream'
+        );
         if (!needsProxy) {
           return item;
         }
@@ -645,6 +651,15 @@ app.get('/api/onlinestream/proxy', async (req, res) => {
   } else if (provider === 'anicrush') {
     requestHeaders.Referer = 'https://megacloud.club/';
     requestHeaders.Origin = 'https://megacloud.club';
+  } else if (provider === 'sudatchi') {
+    requestHeaders.Referer = 'https://sudatchi.com/';
+    requestHeaders.Origin = 'https://sudatchi.com';
+  } else if (provider === 'anizone') {
+    requestHeaders.Referer = 'https://anizone.to/';
+    requestHeaders.Origin = 'https://anizone.to';
+  } else if (provider === 'uniquestream') {
+    requestHeaders.Referer = 'https://anime.uniquestream.net/';
+    requestHeaders.Origin = 'https://anime.uniquestream.net';
   } else if (provider === 'hianime') {
     requestHeaders.Referer = 'https://megacloud.club/';
     requestHeaders.Origin = 'https://megacloud.club';
