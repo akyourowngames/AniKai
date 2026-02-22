@@ -383,16 +383,18 @@ function buildSourceOrder() {
   const primary = byServer.length ? byServer : currentSources.slice();
   if (!primary.length) return [];
 
-  const rankPool = (pool) => {
+  const rankNonEmbedPool = (pool) => {
     const nonEmbed = pool.filter((item) => item.type !== 'embed');
-    const embed = pool.filter((item) => item.type === 'embed');
     const exact = nonEmbed.filter((item) => item.quality === selectedQuality);
     const auto = nonEmbed.filter((item) => item.quality === 'auto');
     const rest = nonEmbed.filter((item) => item.quality !== selectedQuality && item.quality !== 'auto');
-    return [...exact, ...auto, ...rest, ...embed];
+    return [...exact, ...auto, ...rest];
   };
 
-  const ranked = [...rankPool(primary), ...rankPool(fallbackPool)];
+  const primaryNonEmbed = rankNonEmbedPool(primary);
+  const fallbackNonEmbed = rankNonEmbedPool(fallbackPool);
+  const allEmbed = [...primary, ...fallbackPool].filter((item) => item.type === 'embed');
+  const ranked = [...primaryNonEmbed, ...fallbackNonEmbed, ...allEmbed];
 
   // De-duplicate by URL to avoid retry loops on identical entries.
   return ranked.filter((item, idx, arr) => arr.findIndex((x) => x.url === item.url) === idx);
