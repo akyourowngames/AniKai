@@ -84,7 +84,7 @@ function bestMatch(results, anime) {
 // ─── HiAnime wrapper ─────────────────────────────────────────────────────────
 
 async function hianimeEpisodeList(anime, dubbed) {
-  const hianime = new ANIME.HiAnime.Scraper();
+  const hianime = new ANIME.Hianime();
   const titles = getTitleCandidates(anime);
   if (!titles.length) throw new Error('[consumet/hianime] No anime title');
 
@@ -97,7 +97,7 @@ async function hianimeEpisodeList(anime, dubbed) {
   }
   if (!animeId) throw new Error('[consumet/hianime] Could not find anime on HiAnime');
 
-  const info = await hianime.getInfo(animeId);
+  const info = await hianime.fetchAnimeInfo(animeId);
   const episodes =
     info?.seasons?.[0]?.episodes ||
     info?.anime?.episodes ||
@@ -115,13 +115,13 @@ async function hianimeEpisodeList(anime, dubbed) {
 }
 
 async function hianimeEpisodeSources(anime, episodeNumber, dubbed, server) {
-  const hianime = new ANIME.HiAnime.Scraper();
+  const hianime = new ANIME.Hianime();
   const episodes = await hianimeEpisodeList(anime, dubbed);
   const ep = episodes.find((e) => e.number === Number(episodeNumber));
   if (!ep) throw new Error(`[consumet/hianime] Episode ${episodeNumber} not found`);
 
   const category = dubbed ? 'dub' : 'sub';
-  const src = await hianime.getEpisodeSources(ep.providerEpisodeId, undefined, category);
+  const src = await hianime.fetchEpisodeSources(ep.providerEpisodeId, undefined, category);
 
   const subtitles = (src?.tracks || [])
     .filter((t) => t.kind === 'captions' && t.file)
