@@ -37,6 +37,7 @@ let selectedServer = params.get('server') || '';
 let selectedQuality = params.get('quality') || 'auto';
 let currentSources = [];
 let sourceCursor = 0;
+let currentSourceOrder = [];
 let episodeData = [];
 let catalog = []; // For quick search
 let availableProviderIds = [];
@@ -417,6 +418,18 @@ function renderQualityOptions() {
   qualitySelectEl.value = selectedQuality;
 }
 
+function tryNextSourceFallback() {
+  if (!Array.isArray(currentSourceOrder) || currentSourceOrder.length === 0) return false;
+  const nextIndex = sourceCursor + 1;
+  if (nextIndex >= currentSourceOrder.length) return false;
+  sourceCursor = nextIndex;
+  const next = currentSourceOrder[sourceCursor];
+  if (!next?.url) return false;
+  showToast(`Trying fallback source (${next.server || 'next'})`, 'info');
+  playSelectedSource(next);
+  return true;
+}
+
 function playSelectedSource(sourceItem) {
   if (!sourceItem) {
     playerHostEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#666;font-weight:600;">No stream available for this episode</div>';
@@ -451,6 +464,7 @@ function playSelectedSource(sourceItem) {
   setAudioSelectState([], -1);
 
   playerEl.addEventListener('error', () => {
+    if (tryNextSourceFallback()) return;
     const hint = isDubSelectableProvider()
       ? 'Stream blocked. Switch provider or toggle Sub/Dub.'
       : 'Stream failed. Please switch provider manually.';
@@ -482,6 +496,7 @@ function playSelectedSource(sourceItem) {
       hlsInstance.on(Hls.Events.AUDIO_TRACK_SWITCHED, () => syncAudioTracks());
       hlsInstance.on(Hls.Events.ERROR, (_, data) => {
         if (data?.fatal) {
+          if (tryNextSourceFallback()) return;
           const hint = isDubSelectableProvider()
             ? 'HLS blocked. Switch provider or toggle Sub/Dub.'
             : 'HLS stream failed. Please switch provider manually.';
@@ -503,6 +518,7 @@ function renderAndPlay() {
   renderServerOptions();
   renderQualityOptions();
   const order = buildSourceOrder();
+  currentSourceOrder = order;
   const selected = selectSource() || order[0] || null;
   sourceCursor = Math.max(0, order.findIndex((item) => item?.url === selected?.url));
   playSelectedSource(selected);

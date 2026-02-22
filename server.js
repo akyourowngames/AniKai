@@ -345,12 +345,21 @@ app.get('/api/subtitles/file', async (req, res) => {
     const body = await response.text();
     const type = response.headers.get('content-type') || '';
     const isSrt = format === 'srt' || type.includes('application/x-subrip') || /\.srt($|\?)/i.test(target.pathname);
+    const isVtt = format === 'vtt' || type.includes('text/vtt') || /\.vtt($|\?)/i.test(target.pathname);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', '*');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
     if (isSrt) {
       res.setHeader('Content-Type', 'text/vtt; charset=utf-8');
       return res.send(convertSrtToVtt(body));
     }
+    if (isVtt) {
+      res.setHeader('Content-Type', 'text/vtt; charset=utf-8');
+      return res.send(body);
+    }
 
-    res.setHeader('Content-Type', type || 'text/vtt; charset=utf-8');
+    // Default to VTT to keep browser text-track parsing consistent across origins.
+    res.setHeader('Content-Type', 'text/vtt; charset=utf-8');
     return res.send(body);
   } catch (error) {
     return res.status(500).send(error.message);
