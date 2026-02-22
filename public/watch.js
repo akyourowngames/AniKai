@@ -271,6 +271,11 @@ function attachProviderSubtitles(playerEl, sourceItem) {
       plyrInstance.captions.update();
     } catch (_) { }
   }
+  if (plyrInstance && typeof plyrInstance.currentTrack === 'number') {
+    const activeIndex = Array.from(playerEl.querySelectorAll('track[data-anikai-provider-sub="1"]'))
+      .findIndex((node) => node.default);
+    plyrInstance.currentTrack = activeIndex >= 0 ? activeIndex : 0;
+  }
 
   return attached;
 }
@@ -484,6 +489,9 @@ function playSelectedSource(sourceItem) {
       hlsInstance.loadSource(withStreamApiBase(sourceItem.url));
       hlsInstance.attachMedia(playerEl);
       hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+        // Re-attach after HLS manifest setup; some browsers ignore early-added tracks.
+        attachProviderSubtitles(playerEl, sourceItem);
+        setTimeout(() => attachProviderSubtitles(playerEl, sourceItem), 250);
         syncAudioTracks();
         applyPreferredAudioTrack();
         if (plyrInstance) plyrInstance.play().catch(() => { });
