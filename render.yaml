@@ -26,5 +26,9 @@ services:
         sync: false
       - key: SEANIME_TIMEOUT_MS
         value: "12000"
+      - key: ANICRUSH_TIMEOUT_MS
+        value: "30000"
+      - key: HIANIME_TIMEOUT_MS
+        value: "20000"
       - key: ONLINESTREAM_API_BASE_URL
         sync: false

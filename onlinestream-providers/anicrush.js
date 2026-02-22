@@ -1,6 +1,6 @@
 const BASE_URL = 'https://anicrush.to';
 const API_BASE = 'https://api.anicrush.to/shared/v2';
-const REQUEST_TIMEOUT_MS = Number(process.env.ANICRUSH_TIMEOUT_MS || 15000);
+const REQUEST_TIMEOUT_MS = Number(process.env.ANICRUSH_TIMEOUT_MS || 30000);
 
 const SERVER_MAP = {
   'Southcloud-1': 4,

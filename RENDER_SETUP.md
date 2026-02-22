@@ -23,6 +23,8 @@ Set these in Render service Environment:
 - `ANILIST_TOKEN` (optional shortcut if you already have one)
 - `SEANIME_BASE_URL` / `SEANIME_BASE_URLS` (optional fallback bridges)
 - `SEANIME_TIMEOUT_MS=12000`
+- `ANICRUSH_TIMEOUT_MS=30000`
+- `HIANIME_TIMEOUT_MS=20000`
 
 ## 3. Point Vercel frontend to Render stream backend
 
@@ -53,3 +55,4 @@ Then test on Vercel watch page with provider:
 - `Consumet AnimePahe`
 
 If Render free tier sleeps, first request can be slow for 30-60 seconds.
+If AniCrush fails intermittently on free tier, increase `ANICRUSH_TIMEOUT_MS` to `45000`.
