@@ -207,6 +207,30 @@ function withStreamApiBase(pathOrUrl) {
   return `${streamApiBaseUrl}/${input}`;
 }
 
+function normalizeVideoSources(sources) {
+  const list = Array.isArray(sources) ? sources.slice() : [];
+  const subtitlePool = [];
+  const seen = new Set();
+
+  list.forEach((item) => {
+    const subs = Array.isArray(item?.subtitles) ? item.subtitles : [];
+    subs.forEach((sub) => {
+      const key = `${String(sub?.url || '').trim()}|${String(sub?.language || '').trim()}`;
+      if (!sub?.url || seen.has(key)) return;
+      seen.add(key);
+      subtitlePool.push(sub);
+    });
+  });
+
+  if (!subtitlePool.length) return list;
+
+  return list.map((item) => {
+    const hasSubs = Array.isArray(item?.subtitles) && item.subtitles.length > 0;
+    if (hasSubs || item?.type === 'embed') return item;
+    return { ...item, subtitles: subtitlePool.slice() };
+  });
+}
+
 function resetPlayerHost() {
   if (plyrInstance) {
     plyrInstance.destroy();
@@ -568,7 +592,7 @@ async function loadEpisodeSource() {
     if (!response.ok) {
       throw new Error(payload?.error || 'Failed to load episode source');
     }
-    currentSources = payload.videoSources || [];
+    currentSources = normalizeVideoSources(payload.videoSources || []);
     if (!currentSources.length) {
       throw new Error('No stream sources returned');
     }
