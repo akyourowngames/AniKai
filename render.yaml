@@ -1,19 +1,24 @@
 services:
   - type: web
-    name: anikai-web
+    name: anikai-stream
     runtime: node
     plan: free
     buildCommand: npm install
     startCommand: npm start
+    healthCheckPath: /api/onlinestream/providers
     autoDeploy: true
     envVars:
       - key: NODE_VERSION
         value: 20
+      - key: NODE_ENV
+        value: production
       - key: ANILIST_REDIRECT_URI
         sync: false
       - key: ANILIST_CLIENT_ID
         sync: false
       - key: ANILIST_CLIENT_SECRET
+        sync: false
+      - key: ANILIST_TOKEN
         sync: false
       - key: SEANIME_BASE_URL
         sync: false
@@ -21,3 +26,5 @@ services:
         sync: false
       - key: SEANIME_TIMEOUT_MS
         value: "12000"
+      - key: ONLINESTREAM_API_BASE_URL
+        sync: false

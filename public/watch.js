@@ -14,18 +14,11 @@ let dubSelectEl = document.querySelector('#dubSelect');
 const serverSelectEl = document.querySelector('#serverSelect');
 const qualitySelectEl = document.querySelector('#qualitySelect');
 const audioSelectEl = document.querySelector('#audioSelect');
-const subtitleLanguageEl = document.querySelector('#subtitleLanguage');
-const subtitleFormatEl = document.querySelector('#subtitleFormat');
-const subtitleHiEl = document.querySelector('#subtitleHi');
-const subtitleSearchBtn = document.querySelector('#subtitleSearchBtn');
-const subtitleListEl = document.querySelector('#subtitleList');
 const episodeListEl = document.querySelector('#episodeList');
 const epCountEl = document.querySelector('#epCount');
 const nextEpBtn = document.querySelector('#nextEpBtn');
 const prevEpBtn = document.querySelector('#prevEpBtn');
 const theaterBtn = document.querySelector('#theaterBtn');
-const subtitlePanelToggleBtn = document.querySelector('#subtitlePanelToggle');
-const subtitlePanelEl = document.querySelector('#subtitlePanel');
 const sidebarToggle = document.querySelector('#sidebarToggle');
 
 // Search refs
@@ -46,15 +39,16 @@ let currentSources = [];
 let sourceCursor = 0;
 let episodeData = [];
 let catalog = []; // For quick search
-let subtitleResults = [];
 let availableProviderIds = [];
+let streamApiBaseUrl = '';
+const blockedProviderIds = new Set(['animesaturn', 'sudatchi', 'anizone']);
 const defaultProviderOptions = [
   { id: 'seanime', name: 'SeaAnime Bridge' },
   { id: 'anicrush', name: 'AniCrush' },
-  { id: 'animesaturn', name: 'AnimeSaturn' },
   { id: 'hianime', name: 'HiAnime' },
-  { id: 'sudatchi', name: 'Sudatchi' },
-  { id: 'anizone', name: 'AniZone' },
+  { id: 'consumet-hianime', name: 'Consumet HiAnime' },
+  { id: 'consumet-animekai', name: 'Consumet AnimeKai' },
+  { id: 'consumet-animepahe', name: 'Consumet AnimePahe' },
   { id: 'uniquestream', name: 'Anime UniqueStream' },
   { id: 'consumet', name: 'Consumet' }
 ];
@@ -94,10 +88,11 @@ function isDubSelectableProvider() {
   const seaValue = String(seaProviderSelectEl?.value || selectedSeaProvider || '').toLowerCase();
   return (
     providerValue === 'hianime' ||
+    providerValue === 'consumet-hianime' ||
+    providerValue === 'consumet-animekai' ||
     providerValue === 'anicrush' ||
-    providerValue === 'sudatchi' ||
-    providerValue === 'anizone' ||
     providerValue === 'uniquestream' ||
+    (providerValue === 'consumet' && (seaValue === 'hianime' || seaValue === 'animekai')) ||
     (providerValue === 'seanime' && (seaValue === 'hianime' || seaValue === 'anicrush'))
   );
 }
@@ -151,10 +146,6 @@ theaterBtn.addEventListener('click', () => {
   showToast(document.body.classList.contains('theater-mode') ? 'Theater mode on' : 'Theater mode off');
 });
 
-subtitlePanelToggleBtn?.addEventListener('click', () => {
-  subtitlePanelEl?.classList.toggle('open');
-});
-
 // --- Navigation Logic ---
 function updateEpisodeNavigation() {
   const currentIndex = episodeData.findIndex(ep => ep.number === selectedEpisode);
@@ -189,7 +180,6 @@ async function changeEpisode(num) {
 
   updateEpisodeNavigation();
   await loadEpisodeSource();
-  await searchSubtitles();
   showToast(`Switched to Episode ${num}`);
 }
 
@@ -205,6 +195,15 @@ function updateUrlParams(nextValues = {}) {
   });
   const newUrl = `${window.location.pathname}?${next.toString()}`;
   window.history.replaceState({}, '', newUrl);
+}
+
+function withStreamApiBase(pathOrUrl) {
+  const input = String(pathOrUrl || '').trim();
+  if (!input) return input;
+  if (/^https?:\/\//i.test(input)) return input;
+  if (!streamApiBaseUrl) return input;
+  if (input.startsWith('/')) return `${streamApiBaseUrl}${input}`;
+  return `${streamApiBaseUrl}/${input}`;
 }
 
 function resetPlayerHost() {
@@ -240,13 +239,16 @@ function attachProviderSubtitles(playerEl, sourceItem) {
   subtitles.forEach((sub, index) => {
     const subUrl = String(sub?.url || '').trim();
     if (!subUrl) return;
+    const proxiedSubUrl = subUrl.startsWith('/api/subtitles/file')
+      ? withStreamApiBase(subUrl)
+      : withStreamApiBase(`/api/subtitles/file?url=${encodeURIComponent(subUrl)}&format=${encodeURIComponent(String(sub?.format || ''))}`);
     const track = document.createElement('track');
     track.dataset.anikaiSub = '1';
     track.dataset.anikaiProviderSub = '1';
     track.kind = 'subtitles';
     track.label = String(sub?.language || `Subtitle ${index + 1}`);
     track.srclang = String(sub?.language || 'en').slice(0, 2).toLowerCase();
-    track.src = subUrl;
+    track.src = proxiedSubUrl;
     track.default = Boolean(sub?.isDefault) || index === 0;
     playerEl.appendChild(track);
     attached += 1;
@@ -434,7 +436,9 @@ function playSelectedSource(sourceItem) {
     setAudioSelectState([], -1);
 
     const iframe = document.createElement('iframe');
-    iframe.src = sourceItem.type === 'youtube' ? `https://www.youtube-nocookie.com/embed/${sourceItem.url}` : sourceItem.url;
+    iframe.src = sourceItem.type === 'youtube'
+      ? `https://www.youtube-nocookie.com/embed/${sourceItem.url}`
+      : withStreamApiBase(sourceItem.url);
     iframe.allowFullscreen = true;
     playerHostEl.innerHTML = '';
     playerHostEl.appendChild(iframe);
@@ -463,7 +467,7 @@ function playSelectedSource(sourceItem) {
           });
         }
       });
-      hlsInstance.loadSource(sourceItem.url);
+      hlsInstance.loadSource(withStreamApiBase(sourceItem.url));
       hlsInstance.attachMedia(playerEl);
       hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
         syncAudioTracks();
@@ -487,101 +491,11 @@ function playSelectedSource(sourceItem) {
       return;
     }
   }
-  playerEl.src = sourceItem.url;
+  playerEl.src = withStreamApiBase(sourceItem.url);
   if (plyrInstance) {
     plyrInstance.play().catch(() => { });
   } else {
     playerEl.play().catch(() => { });
-  }
-}
-
-function renderSubtitleResults() {
-  if (!subtitleListEl) return;
-  if (!subtitleResults.length) {
-    subtitleListEl.innerHTML = '<div style="color: var(--text-dim); font-size: 12px;">No subtitles found for this episode.</div>';
-    return;
-  }
-
-  subtitleListEl.innerHTML = '';
-  subtitleResults.forEach((sub, index) => {
-    const item = document.createElement('div');
-    item.className = 'subtitle-item';
-    const language = String(sub.display || sub.language || 'Unknown');
-    const format = String(sub.format || '').toUpperCase();
-    item.innerHTML = `
-      <div>
-        <div>${language}${sub.isHearingImpaired ? ' [CC]' : ''}</div>
-        <small>${format || 'UNK'} - ${sub.source || 'subtitle'}</small>
-      </div>
-      <button type="button" data-sub-index="${index}">Use</button>
-    `;
-    subtitleListEl.appendChild(item);
-  });
-}
-
-async function attachSubtitle(index) {
-  const sub = subtitleResults[index];
-  if (!sub) return;
-  const playerEl = getPlayerEl();
-  if (!playerEl || playerEl.tagName !== 'VIDEO') {
-    showToast('Subtitle works only on direct video streams', 'error');
-    return;
-  }
-
-  try {
-    const proxyUrl = `/api/subtitles/file?url=${encodeURIComponent(sub.url)}&format=${encodeURIComponent(sub.format || '')}`;
-    clearInjectedSubtitles();
-    const track = document.createElement('track');
-    track.dataset.anikaiSub = '1';
-    track.kind = 'subtitles';
-    track.label = `${sub.display || sub.language || 'Subtitle'} ${sub.format ? `[${String(sub.format).toUpperCase()}]` : ''}`.trim();
-    track.srclang = String(sub.language || 'en').toLowerCase();
-    track.src = proxyUrl;
-    track.default = true;
-    track.addEventListener('load', () => {
-      if (track.track) track.track.mode = 'showing';
-      if (plyrInstance) {
-        plyrInstance.currentTrack = Array.from(playerEl.textTracks).findIndex((item) => item === track.track);
-      }
-    });
-    playerEl.appendChild(track);
-    showToast(`Subtitle loaded: ${sub.display || sub.language || 'Unknown'}`);
-  } catch (error) {
-    console.error(error);
-    showToast('Failed to attach subtitle', 'error');
-  }
-}
-
-async function searchSubtitles() {
-  if (!animeId || !subtitleListEl || !subtitleSearchBtn) return;
-  subtitleSearchBtn.disabled = true;
-  subtitleListEl.innerHTML = '<div style="color: var(--text-dim); font-size: 12px;">Searching subtitles...</div>';
-
-  try {
-    const response = await fetch('/api/subtitles/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        mediaId: Number(animeId),
-        source,
-        episodeNumber: selectedEpisode,
-        seasonNumber: 1,
-        language: subtitleLanguageEl?.value || 'all',
-        format: subtitleFormatEl?.value || 'all',
-        hi: Boolean(subtitleHiEl?.checked)
-      })
-    });
-    const payload = await parseApiJson(response);
-    if (!response.ok) throw new Error(payload?.error || 'Subtitle search failed');
-    subtitleResults = Array.isArray(payload?.results) ? payload.results : [];
-    renderSubtitleResults();
-  } catch (error) {
-    console.error(error);
-    subtitleResults = [];
-    subtitleListEl.innerHTML = '<div style="color: #d66; font-size: 12px;">Subtitle search failed.</div>';
-    showToast(error.message || 'Subtitle search failed', 'error');
-  } finally {
-    subtitleSearchBtn.disabled = false;
   }
 }
 
@@ -609,7 +523,7 @@ function renderEpisodeList(episodes) {
 
 async function loadEpisodeSource() {
   try {
-    const response = await fetch('/api/onlinestream/episode-source', {
+    const response = await fetch(withStreamApiBase('/api/onlinestream/episode-source'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -646,7 +560,7 @@ async function loadEpisodeSource() {
 
 async function loadEpisodeList() {
   try {
-    const response = await fetch('/api/onlinestream/episode-list', {
+    const response = await fetch(withStreamApiBase('/api/onlinestream/episode-list'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -705,6 +619,13 @@ async function loadSeaProviders() {
   }
 
   // ── Seanime provider: fetch available sea sources ──
+  if (selectedProvider.startsWith('consumet-')) {
+    seaProviderSelectEl.style.display = 'none';
+    selectedSeaProvider = '';
+    updateUrlParams({ seaProvider: null });
+    renderDubOption();
+    return;
+  }
   if (selectedProvider !== 'seanime') {
     seaProviderSelectEl.style.display = 'none';
     renderDubOption();
@@ -713,9 +634,12 @@ async function loadSeaProviders() {
 
   seaProviderSelectEl.style.display = '';
   try {
-    const res = await fetch('/api/onlinestream/seanime/providers');
+    const res = await fetch(withStreamApiBase('/api/onlinestream/seanime/providers'));
     const providers = await parseApiJson(res);
-    availableSeaProviders = Array.isArray(providers) ? providers : [];
+    availableSeaProviders = (Array.isArray(providers) ? providers : []).filter((item) => {
+      const id = String(item?.id || '').trim().toLowerCase();
+      return id && !blockedProviderIds.has(id);
+    });
   } catch (_) {
     availableSeaProviders = [];
   }
@@ -797,7 +721,7 @@ function normalizeProviderList(payload) {
       id: String(item?.id || '').trim().toLowerCase(),
       name: String(item?.name || item?.id || '').trim()
     }))
-    .filter((item) => item.id);
+    .filter((item) => item.id && !blockedProviderIds.has(item.id));
 }
 
 function isTypingContext(target) {
@@ -841,11 +765,16 @@ function toggleCaptionsShortcut() {
 async function init() {
   try {
     ensureDubSelectElement();
+    try {
+      const configRes = await fetch('/api/client-config');
+      const configPayload = await parseApiJson(configRes);
+      const cfgBase = String(configPayload?.streamApiBaseUrl || '').trim().replace(/\/+$/, '');
+      streamApiBaseUrl = cfgBase;
+    } catch (_) {
+      streamApiBaseUrl = '';
+    }
     if (!window.Plyr) {
       showToast('Advanced player library failed to load. Check network filters.', 'error');
-    }
-    if (subtitlePanelEl && window.innerWidth > 820) {
-      subtitlePanelEl.classList.add('open');
     }
     const response = await fetch(`/api/anime/${animeId}?source=${source}`);
     const anime = await parseApiJson(response);
@@ -864,7 +793,7 @@ async function init() {
     // Fetch providers (with robust fallback so UI stays usable).
     let providers = [];
     try {
-      const pRes = await fetch('/api/onlinestream/providers');
+      const pRes = await fetch(withStreamApiBase('/api/onlinestream/providers'));
       const payload = await parseApiJson(pRes);
       if (!pRes.ok) {
         throw new Error(payload?.error || `Provider API failed (${pRes.status})`);
@@ -887,7 +816,7 @@ async function init() {
 
     // Backward compatibility:
     // If URL has provider=seanime with seaProvider equal to a first-class provider id
-    // (e.g. animesaturn), switch to the direct provider automatically.
+    // (e.g. hianime), switch to the direct provider automatically.
     if (
       selectedProvider === 'seanime' &&
       selectedSeaProvider &&
@@ -897,6 +826,20 @@ async function init() {
       selectedProvider = selectedSeaProvider;
       selectedSeaProvider = '';
       updateUrlParams({ provider: selectedProvider, seaProvider: null });
+    }
+
+    if (selectedProvider === 'consumet' && selectedSeaProvider) {
+      const consumetMap = {
+        hianime: 'consumet-hianime',
+        animekai: 'consumet-animekai',
+        animepahe: 'consumet-animepahe'
+      };
+      const mappedProvider = consumetMap[selectedSeaProvider];
+      if (mappedProvider && providerIds.includes(mappedProvider)) {
+        selectedProvider = mappedProvider;
+        selectedSeaProvider = '';
+        updateUrlParams({ provider: selectedProvider, seaProvider: null });
+      }
     }
 
     if (!providerIds.includes(selectedProvider)) {
@@ -910,7 +853,6 @@ async function init() {
     renderDubOption();
     updateUrlParams({ dubbed: selectedDub ? '1' : null });
     await loadEpisodeList();
-    await searchSubtitles();
     setupQuickSearch();
   } catch (error) {
     console.error(error);
@@ -948,15 +890,6 @@ audioSelectEl?.addEventListener('change', () => {
   const next = Number(audioSelectEl.value);
   if (!Number.isInteger(next) || next < 0) return;
   hlsInstance.audioTrack = next;
-});
-
-subtitleSearchBtn?.addEventListener('click', searchSubtitles);
-subtitleListEl?.addEventListener('click', (event) => {
-  const btn = event.target.closest('button[data-sub-index]');
-  if (!btn) return;
-  const index = Number(btn.dataset.subIndex);
-  if (Number.isNaN(index)) return;
-  attachSubtitle(index);
 });
 
 document.addEventListener('keydown', (event) => {

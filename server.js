@@ -60,6 +60,17 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+function getClientConfig() {
+  const streamApiBaseUrl = String(process.env.ONLINESTREAM_API_BASE_URL || '')
+    .trim()
+    .replace(/\/+$/, '');
+  return { streamApiBaseUrl };
+}
+
+app.get('/api/client-config', (req, res) => {
+  return res.json(getClientConfig());
+});
+
 function getAnilistOAuthConfig() {
   const clientId = String(process.env.ANILIST_CLIENT_ID || '').trim();
   const clientSecret = String(process.env.ANILIST_CLIENT_SECRET || '').trim();
@@ -226,12 +237,19 @@ app.get('/api/onlinestream/seanime/providers', async (req, res) => {
   try {
     const payload = await seaAnimeRequest('/api/v1/extensions/list/onlinestream-provider');
     const data = Array.isArray(payload) ? payload : (Array.isArray(payload?.data) ? payload.data : []);
+    const blockedProviders = new Set(['animesaturn', 'sudatchi', 'anizone']);
+    const normalizeProviderKey = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
     const providers = data
       .map((item) => ({
         id: String(item?.id || '').trim(),
         name: String(item?.name || item?.id || '').trim()
       }))
-      .filter((item) => item.id);
+      .filter((item) => {
+        if (!item.id) return false;
+        const idKey = normalizeProviderKey(item.id);
+        const nameKey = normalizeProviderKey(item.name);
+        return !blockedProviders.has(idKey) && !blockedProviders.has(nameKey);
+      });
     return res.json(providers);
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -538,24 +556,29 @@ app.post('/api/onlinestream/episode-source', async (req, res) => {
         const sourceType = String(item?.type || '').toLowerCase();
         const isEmbeddable = sourceType === 'embed' || sourceType === 'youtube';
         // consumet + hianime providers handle their own auth/CF — no proxy needed
+        const forceProxyForConsumet = (
+          provider.id === 'consumet-hianime' ||
+          provider.id === 'consumet-animekai' ||
+          provider.id === 'consumet-animepahe' ||
+          (provider.id === 'consumet' && (seaProvider === 'hianime' || seaProvider === 'animekai' || seaProvider === 'animepahe'))
+        );
         const isNoProxyProvider = (
-          provider.id === 'consumet' ||
-          provider.id === 'hianime' ||
           provider.id === 'seanime'
         );
-        const needsProxy = !isEmbeddable && !isNoProxyProvider && (
-          provider.id === 'animesaturn' ||
+        const needsProxy = !isEmbeddable && (forceProxyForConsumet || (!isNoProxyProvider && (
           provider.id === 'anicrush' ||
-          provider.id === 'sudatchi' ||
-          provider.id === 'anizone' ||
           provider.id === 'uniquestream'
-        );
+        )));
         if (!needsProxy) {
           return item;
         }
+        let proxyProviderId = provider.id;
+        if (provider.id === 'consumet-hianime' || (provider.id === 'consumet' && seaProvider === 'hianime')) {
+          proxyProviderId = 'hianime';
+        }
         return {
           ...item,
-          url: `/api/onlinestream/proxy?provider=${encodeURIComponent(provider.id)}&url=${encodeURIComponent(sourceUrl)}`,
+          url: `/api/onlinestream/proxy?provider=${encodeURIComponent(proxyProviderId)}&url=${encodeURIComponent(sourceUrl)}`,
           headers: undefined
         };
       });
@@ -651,24 +674,19 @@ app.get('/api/onlinestream/proxy', async (req, res) => {
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36'
   };
 
-  if (provider === 'animesaturn') {
-    requestHeaders.Referer = 'https://www.animesaturn.cx/';
-    requestHeaders.Origin = 'https://www.animesaturn.cx';
-  } else if (provider === 'anicrush') {
+  if (provider === 'anicrush') {
     requestHeaders.Referer = 'https://megacloud.club/';
     requestHeaders.Origin = 'https://megacloud.club';
-  } else if (provider === 'sudatchi') {
-    requestHeaders.Referer = 'https://sudatchi.com/';
-    requestHeaders.Origin = 'https://sudatchi.com';
-  } else if (provider === 'anizone') {
-    requestHeaders.Referer = 'https://anizone.to/';
-    requestHeaders.Origin = 'https://anizone.to';
   } else if (provider === 'uniquestream') {
     requestHeaders.Referer = 'https://anime.uniquestream.net/';
     requestHeaders.Origin = 'https://anime.uniquestream.net';
   } else if (provider === 'hianime') {
     requestHeaders.Referer = 'https://megacloud.club/';
     requestHeaders.Origin = 'https://megacloud.club';
+  } else if (provider.startsWith('consumet')) {
+    // Generic fallback for Consumet-hosted CDNs.
+    requestHeaders.Referer = `${target.origin}/`;
+    requestHeaders.Origin = target.origin;
   }
 
   const range = String(req.headers.range || '').trim();
