@@ -4,16 +4,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="Stream anime on Anikai with fast loading, watch progress tracking, playlist tools, and trending anime discovery." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://ani-kai.vercel.app/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Anikai - Free Anime Streaming" />
+  <meta property="og:description"
+    content="Discover trending anime, continue where you left off, and stream episodes with a clean, fast experience." />
+  <meta property="og:url" content="https://ani-kai.vercel.app/" />
+  <meta name="twitter:card" content="summary_large_image" />
   <title>Anikai - Free Anime Streaming</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
-    rel="stylesheet" />
+  <link rel="preload"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" as="style"
+    onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet" />
+  </noscript>
   <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="features.css" />
 </head>
 
 <body class="home-page">
+  <h1 class="sr-only">Anikai Anime Streaming Home</h1>
   <!-- Sidebar -->
   <aside id="sidebar" class="sidebar">
     <div class="logo-area">
@@ -27,7 +42,7 @@
 
     <div class="sidebar-scroll">
       <div class="sidebar-section">
-        <h3>Menu</h3>
+        <div class="sidebar-heading">Menu</div>
         <nav class="sidebar-nav">
           <a href="/" class="nav-link active">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -41,11 +56,24 @@
             </svg>
             <span>Trending</span>
           </a>
-          <a href="#list" class="nav-link" id="myListLink">
+          <a href="#watchListSection" class="nav-link" id="myListLink">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
             </svg>
-            <span>My List</span>
+            <span>Saved Playlist</span>
+          </a>
+          <a href="#journeySection" class="nav-link" id="journeyLink">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12h6l3-8 4 16 3-8h2"></path>
+            </svg>
+            <span>Watch Journey</span>
+          </a>
+          <a href="/account.html" class="nav-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21a8 8 0 0 0-16 0"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>My Account</span>
           </a>
           <a href="/random" class="nav-link" id="randomBtn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -57,16 +85,16 @@
       </div>
 
       <div class="sidebar-section">
-        <h3>Genres</h3>
+        <div class="sidebar-heading">Genres</div>
         <div class="genre-grid">
-          <a href="#" class="genre-link">Action</a>
-          <a href="#" class="genre-link">Adventure</a>
-          <a href="#" class="genre-link">Comedy</a>
-          <a href="#" class="genre-link">Drama</a>
-          <a href="#" class="genre-link">Fantasy</a>
-          <a href="#" class="genre-link">Romance</a>
-          <a href="#" class="genre-link">Sci-Fi</a>
-          <a href="#" class="genre-link">Sports</a>
+          <a href="/?genre=Action" class="genre-link">Action</a>
+          <a href="/?genre=Adventure" class="genre-link">Adventure</a>
+          <a href="/?genre=Comedy" class="genre-link">Comedy</a>
+          <a href="/?genre=Drama" class="genre-link">Drama</a>
+          <a href="/?genre=Fantasy" class="genre-link">Fantasy</a>
+          <a href="/?genre=Romance" class="genre-link">Romance</a>
+          <a href="/?genre=Sci-Fi" class="genre-link">Sci-Fi</a>
+          <a href="/?genre=Sports" class="genre-link">Sports</a>
         </div>
       </div>
     </div>
@@ -75,7 +103,7 @@
   <div class="content-wrapper">
     <!-- Top Bar -->
     <header class="top-bar">
-      <button id="sidebarToggle" class="icon-btn">
+      <button id="sidebarToggle" class="icon-btn" type="button" aria-label="Toggle sidebar navigation">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="3" y1="12" x2="21" y2="12"></line>
           <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -92,25 +120,42 @@
         </div>
         <div id="searchResults" class="search-results"></div>
       </div>
-      <button id="anilistLoginBtn" class="btn-login">AniList Login</button>
+      <div class="account-controls">
+        <div id="userChip" class="user-chip" style="display: none;"></div>
+        <button id="loginBtn" class="btn-login">Log In</button>
+        <button id="logoutBtn" class="btn-login btn-logout" style="display: none;">Log Out</button>
+        <button id="anilistLoginBtn" class="btn-login btn-anilist">AniList Login</button>
+      </div>
     </header>
 
     <!-- Featured -->
     <section class="hero-section">
       <div id="hero" class="hero-banner">
+        <img id="heroImage" class="hero-image" alt="" loading="eager" fetchpriority="high" decoding="async" />
         <div class="hero-carousel-wrap">
           <div id="trendingCarousel" class="hero-carousel" aria-label="Top 5 Trending"></div>
         </div>
         <div class="hero-content">
-          <h1 id="heroTitle" class="hero-title">Loading...</h1>
+          <h2 id="heroTitle" class="hero-title">Loading...</h2>
           <div id="heroMeta" class="hero-meta"></div>
           <p id="heroDesc" class="hero-desc"></p>
-          <a id="heroWatchBtn" class="btn-primary">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-              <path d="M8 5.14v14c0 .86.84 1.4 1.58.97l11-7c.74-.47.74-1.47 0-1.94l-11-7c-.74-.43-1.58.11-1.58.97z" />
-            </svg>
-            WATCH NOW
-          </a>
+          <div class="hero-actions">
+            <a id="heroWatchBtn" class="btn-primary" href="/watch.html" aria-label="Watch anime now">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                <path d="M8 5.14v14c0 .86.84 1.4 1.58.97l11-7c.74-.47.74-1.47 0-1.94l-11-7c-.74-.43-1.58.11-1.58.97z" />
+              </svg>
+              WATCH NOW
+            </a>
+            <button id="heroShareBtn" class="hero-share-btn" type="button" title="Share current anime" aria-label="Share current anime">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -118,22 +163,6 @@
     <!-- Main Layout -->
     <div class="main-layout">
       <main class="primary-content">
-        <!-- Continue Watching -->
-        <section id="continueWatchingSection" style="display: none;">
-          <div class="section-header">
-            <div class="section-title">Continue Watching</div>
-          </div>
-          <div id="continueGrid" class="anime-grid"></div>
-        </section>
-
-        <!-- Watch List -->
-        <section id="watchListSection" style="display: none;">
-          <div class="section-header">
-            <div class="section-title">My Watch List</div>
-          </div>
-          <div id="watchListGrid" class="anime-grid"></div>
-        </section>
-
         <!-- Latest Updates -->
         <section id="latest">
           <div class="section-header">
@@ -148,6 +177,31 @@
             <div class="section-title">Trending Now</div>
           </div>
           <div id="animeGrid" class="anime-grid"></div>
+        </section>
+
+        <!-- Continue Watching -->
+        <section id="continueWatchingSection" style="display: none;">
+          <div class="section-header">
+            <div class="section-title">Continue Watching</div>
+            <button id="continueResumeBtn" class="btn-action continue-resume-btn" type="button" style="display:none;">Resume Latest</button>
+          </div>
+          <div id="continueGrid" class="anime-grid"></div>
+        </section>
+
+        <!-- Saved Playlist -->
+        <section id="watchListSection" style="display: none;">
+          <div class="section-header">
+            <div class="section-title">Saved Playlist</div>
+          </div>
+          <div id="watchListGrid" class="anime-grid"></div>
+        </section>
+
+        <!-- Watch Journey -->
+        <section id="journeySection" style="display: none;">
+          <div class="section-header">
+            <div class="section-title">Watch Journey</div>
+          </div>
+          <div id="journeyList" class="journey-list"></div>
         </section>
       </main>
 
@@ -164,14 +218,14 @@
 
     <footer class="site-footer">
       <div class="footer-top">
-        <h3>A-Z List</h3>
+        <h2>A-Z List</h2>
         <p>Browse anime titles by letter and discover your next watch.</p>
         <div class="az-links">
-          <a href="#">All</a><a href="#">0-9</a><a href="#">A</a><a href="#">B</a><a href="#">C</a><a href="#">D</a><a
-            href="#">E</a><a href="#">F</a><a href="#">G</a><a href="#">H</a><a href="#">I</a><a href="#">J</a><a
-            href="#">K</a><a href="#">L</a><a href="#">M</a><a href="#">N</a><a href="#">O</a><a href="#">P</a><a
-            href="#">Q</a><a href="#">R</a><a href="#">S</a><a href="#">T</a><a href="#">U</a><a href="#">V</a><a
-            href="#">W</a><a href="#">X</a><a href="#">Y</a><a href="#">Z</a>
+          <a href="/" aria-label="Browse all anime titles">All</a><a href="/?letter=0-9" aria-label="Browse anime titles starting with a number">0-9</a><a href="/?letter=A" aria-label="Browse anime titles starting with A">A</a><a href="/?letter=B" aria-label="Browse anime titles starting with B">B</a><a href="/?letter=C" aria-label="Browse anime titles starting with C">C</a><a href="/?letter=D" aria-label="Browse anime titles starting with D">D</a><a
+            href="/?letter=E" aria-label="Browse anime titles starting with E">E</a><a href="/?letter=F" aria-label="Browse anime titles starting with F">F</a><a href="/?letter=G" aria-label="Browse anime titles starting with G">G</a><a href="/?letter=H" aria-label="Browse anime titles starting with H">H</a><a href="/?letter=I" aria-label="Browse anime titles starting with I">I</a><a href="/?letter=J" aria-label="Browse anime titles starting with J">J</a><a
+            href="/?letter=K" aria-label="Browse anime titles starting with K">K</a><a href="/?letter=L" aria-label="Browse anime titles starting with L">L</a><a href="/?letter=M" aria-label="Browse anime titles starting with M">M</a><a href="/?letter=N" aria-label="Browse anime titles starting with N">N</a><a href="/?letter=O" aria-label="Browse anime titles starting with O">O</a><a href="/?letter=P" aria-label="Browse anime titles starting with P">P</a><a
+            href="/?letter=Q" aria-label="Browse anime titles starting with Q">Q</a><a href="/?letter=R" aria-label="Browse anime titles starting with R">R</a><a href="/?letter=S" aria-label="Browse anime titles starting with S">S</a><a href="/?letter=T" aria-label="Browse anime titles starting with T">T</a><a href="/?letter=U" aria-label="Browse anime titles starting with U">U</a><a href="/?letter=V" aria-label="Browse anime titles starting with V">V</a><a
+            href="/?letter=W" aria-label="Browse anime titles starting with W">W</a><a href="/?letter=X" aria-label="Browse anime titles starting with X">X</a><a href="/?letter=Y" aria-label="Browse anime titles starting with Y">Y</a><a href="/?letter=Z" aria-label="Browse anime titles starting with Z">Z</a>
         </div>
       </div>
       <div class="footer-bottom">
@@ -183,38 +237,38 @@
 
   <!-- Templates -->
   <template id="cardTemplate">
-    <a href="#" class="card">
+    <a href="/watch.html" class="card">
       <div class="card-poster">
-        <img alt="Poster" class="poster-img" loading="lazy" />
+        <img alt="Poster" class="poster-img" loading="lazy" decoding="async" width="400" height="600" />
         <div class="tag-badge">HD</div>
         <div class="tag-eps">EP 0</div>
-        <button class="card-action-btn" title="Add to Watch List">
+        <button class="card-action-btn" title="Add to Watch List" aria-label="Add to watch list">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 5v14M5 12h14"></path>
           </svg>
         </button>
       </div>
       <div class="card-info">
-        <h4 class="card-title"></h4>
+        <div class="card-title"></div>
         <span class="card-meta">TV • 2024</span>
       </div>
     </a>
   </template>
 
   <template id="listTemplate">
-    <a href="#" class="list-item">
+    <a href="/watch.html" class="list-item">
       <div class="list-rank">01</div>
-      <img class="list-img" />
+      <img class="list-img" alt="Anime poster" loading="lazy" decoding="async" width="48" height="64" />
       <div class="list-info">
-        <h5 class="list-title">Title</h5>
+        <div class="list-title">Title</div>
         <span class="list-meta">Action, Drama</span>
       </div>
     </a>
   </template>
 
   <template id="searchResultTemplate">
-    <a href="#" class="search-item">
-      <img class="search-poster" />
+    <a href="/watch.html" class="search-item">
+      <img class="search-poster" alt="Search result poster" loading="lazy" decoding="async" width="40" height="56" />
       <div class="search-info">
         <div class="search-title"></div>
         <div class="search-meta"></div>
@@ -231,18 +285,40 @@
         3. You will be redirected back and token is saved to this website
       </p>
       <div class="auth-actions">
-        <a id="openAnilistTokenPage" class="btn-primary" target="_blank" rel="noopener noreferrer">Open Token Page</a>
-        <button id="closeAnilistModal" class="btn-action">Close</button>
+        <a id="openAnilistTokenPage" class="btn-primary auth-btn auth-btn-primary" href="/api/auth/anilist/start" target="_blank"
+          rel="noopener noreferrer">Open Token Page</a>
+        <button id="closeAnilistModal" class="btn-action auth-btn auth-btn-ghost">Close</button>
       </div>
       <label for="anilistTokenInput">Optional: Paste AniList Token Manually</label>
       <input id="anilistTokenInput" type="text" placeholder="Paste token here..." />
-      <button id="saveAnilistTokenBtn" class="btn-primary">Save Token to Website</button>
+      <button id="saveAnilistTokenBtn" class="btn-primary auth-btn auth-btn-primary">Save Token to Website</button>
       <div id="anilistAuthStatus" class="auth-status"></div>
     </div>
   </div>
 
-  <script src="features.js"></script>
-  <script src="app.js"></script>
+  <div id="firebaseAuthModal" class="auth-modal" style="display: none;">
+    <div class="auth-card auth-card--firebase">
+      <h3>Account Login</h3>
+      <p>
+        Sign in to sync playlist and watch journey with Firebase.<br />
+        Use Google or Email/Password.
+      </p>
+      <label for="authDisplayNameInput">Name</label>
+      <input id="authDisplayNameInput" type="text" placeholder="Enter your name" />
+      <label for="authEmailInput">Email</label>
+      <input id="authEmailInput" type="email" placeholder="you@example.com" />
+      <label for="authPasswordInput">Password</label>
+      <input id="authPasswordInput" type="password" placeholder="At least 6 characters" />
+      <div class="auth-actions">
+        <button id="firebaseGoogleBtn" class="btn-primary auth-btn auth-btn-google">Continue with Google</button>
+        <button id="firebaseAuthConfirmBtn" class="btn-action auth-btn auth-btn-secondary">Email Login / Sign Up</button>
+        <button id="firebaseAuthCancelBtn" class="btn-action auth-btn auth-btn-ghost">Cancel</button>
+      </div>
+      <div id="firebaseAuthStatus" class="auth-status"></div>
+    </div>
+  </div>
+
+  <script defer src="app.js"></script>
 </body>
 
 </html>

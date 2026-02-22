@@ -3,6 +3,8 @@ const anicrushProvider = require('./anicrush');
 const hianimeProvider = require('./hianime');
 const uniquestreamProvider = require('./uniquestream');
 const consumetProvider = require('./consumet');
+const tatakaiHindiDubbedProvider = require('./tatakai-hindidubbed');
+const tatakaiDesiDubAnimeProvider = require('./tatakai-desidubanime');
 
 function createConsumetAliasProvider(id, name, seaProvider) {
   return {
@@ -44,6 +46,8 @@ const providers = new Map([
   [anicrushProvider.id, anicrushProvider],
   [hianimeProvider.id, hianimeProvider],
   [uniquestreamProvider.id, uniquestreamProvider],
+  [tatakaiHindiDubbedProvider.id, tatakaiHindiDubbedProvider],
+  [tatakaiDesiDubAnimeProvider.id, tatakaiDesiDubAnimeProvider],
   [consumetProvider.id, consumetProvider],
   [consumetHiAnimeProvider.id, consumetHiAnimeProvider],
   [consumetAnimeKaiProvider.id, consumetAnimeKaiProvider],

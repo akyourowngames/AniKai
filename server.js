@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs/promises');
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 
 const { listAnime, getAnimeDetails } = require('./services/anime-data');
 const { getProvider, listProviders } = require('./onlinestream-providers');
@@ -81,6 +82,7 @@ async function fetchWithHeaderPreservingRedirects(url, headers, maxRedirects = 5
 }
 
 app.use(cors());
+app.use(compression());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -599,8 +601,11 @@ app.post('/api/onlinestream/episode-source', async (req, res) => {
           provider.id === 'seanime'
         );
         const needsProxy = !isEmbeddable && (forceProxyForConsumet || (!isNoProxyProvider && (
+          provider.id === 'hianime' ||
           provider.id === 'anicrush' ||
-          provider.id === 'uniquestream'
+          provider.id === 'uniquestream' ||
+          provider.id === 'tatakai-hindidubbed' ||
+          provider.id === 'tatakai-desidubanime'
         )));
         if (!needsProxy) {
           return item;
@@ -716,6 +721,9 @@ app.get('/api/onlinestream/proxy', async (req, res) => {
   } else if (provider === 'hianime') {
     requestHeaders.Referer = 'https://megacloud.club/';
     requestHeaders.Origin = 'https://megacloud.club';
+  } else if (provider.startsWith('tatakai')) {
+    requestHeaders.Referer = `${target.origin}/`;
+    requestHeaders.Origin = target.origin;
   } else if (provider.startsWith('consumet')) {
     // Generic fallback for Consumet-hosted CDNs.
     requestHeaders.Referer = `${target.origin}/`;

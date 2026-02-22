@@ -112,7 +112,7 @@ function createDetailModal() {
     modal.className = 'detail-modal';
     modal.innerHTML = `
     <div class="detail-modal-inner">
-      <button class="detail-close-btn" id="detailCloseBtn">
+      <button class="detail-close-btn" id="detailCloseBtn" type="button" aria-label="Close details">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
       <div class="detail-hero" id="detailHero">
@@ -125,10 +125,10 @@ function createDetailModal() {
               <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M8 5.14v14c0 .86.84 1.4 1.58.97l11-7c.74-.47.74-1.47 0-1.94l-11-7c-.74-.43-1.58.11-1.58.97z"/></svg>
               Play
             </a>
-            <button id="detailAddListBtn" class="detail-icon-action" title="Add to Watch List">
+            <button id="detailAddListBtn" class="detail-icon-action" title="Add to Watch List" type="button" aria-label="Add to watch list">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
             </button>
-            <button id="detailShareBtn" class="detail-icon-action" title="Share">
+            <button id="detailShareBtn" class="detail-icon-action" title="Share" type="button" aria-label="Share anime">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
             </button>
           </div>
@@ -423,6 +423,7 @@ function createShortcutsPanel() {
         <div class="shortcut-item"><kbd>C</kbd><span>Toggle Captions</span></div>
         <div class="shortcut-item"><kbd>N</kbd><span>Next Episode</span></div>
         <div class="shortcut-item"><kbd>S</kbd><span>Skip Intro (+85s)</span></div>
+        <div class="shortcut-item"><kbd>O</kbd><span>Skip Outro</span></div>
         <div class="shortcut-item"><kbd>?</kbd><span>Show Shortcuts</span></div>
       </div>
     </div>
@@ -446,14 +447,14 @@ function injectTopBarExtras() {
     const extras = document.createElement('div');
     extras.className = 'topbar-extras';
     extras.innerHTML = `
-    <button id="filterToggleBtn" class="icon-btn topbar-extra-btn" title="Search Filters">
+    <button id="filterToggleBtn" class="icon-btn topbar-extra-btn" title="Search Filters" type="button" aria-label="Open search filters">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
     </button>
-    <button id="notifBtn" class="icon-btn topbar-extra-btn notif-btn" title="Notifications">
+    <button id="notifBtn" class="icon-btn topbar-extra-btn notif-btn" title="Notifications" type="button" aria-label="Open notifications">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
       <span id="notifBadge" class="notif-badge" style="display:none">0</span>
     </button>
-    <button id="shortcutsBtn" class="icon-btn topbar-extra-btn" title="Keyboard Shortcuts (?)">
+    <button id="shortcutsBtn" class="icon-btn topbar-extra-btn" title="Keyboard Shortcuts (?)" type="button" aria-label="Open keyboard shortcuts">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>
     </button>
   `;

@@ -2,6 +2,11 @@ const params = new URLSearchParams(window.location.search);
 const animeId = params.get('id');
 const sourceParam = params.get('source');
 const source = sourceParam === 'mal' ? 'mal' : 'anilist';
+const hasQueryProvider = params.has('provider');
+const hasQuerySeaProvider = params.has('seaProvider');
+const hasQueryDub = params.has('dubbed');
+const hasQueryServer = params.has('server');
+const hasQueryQuality = params.has('quality');
 
 const titleEl = document.querySelector('#animeTitle');
 const metaEl = document.querySelector('#animeMeta');
@@ -25,6 +30,13 @@ const sidebarToggle = document.querySelector('#sidebarToggle');
 const searchInput = document.querySelector('#searchInput');
 const searchResults = document.querySelector('#searchResults');
 const searchResultTemplate = document.querySelector('#searchResultTemplate');
+const firebaseClient = window.AnikaiFirebase || null;
+const PLAYER_PREFS_KEY = 'anikai_player_prefs';
+const RECENT_SEARCHES_KEY = 'anikai_recent_searches';
+const WATCH_ANIME_CACHE_PREFIX = 'anikai_watch_anime_v1';
+const WATCH_EPISODES_CACHE_PREFIX = 'anikai_watch_episodes_v1';
+const WATCH_ANIME_CACHE_TTL_MS = 1000 * 60 * 60 * 12; // 12h
+const WATCH_EPISODES_CACHE_TTL_MS = 1000 * 60 * 15; // 15m
 
 let hlsInstance = null;
 let plyrInstance = null;
@@ -42,6 +54,7 @@ let episodeData = [];
 let catalog = []; // For quick search
 let availableProviderIds = [];
 let streamApiBaseUrl = '';
+let searchAbortController = null;
 const blockedProviderIds = new Set(['animesaturn', 'sudatchi', 'anizone']);
 const defaultProviderOptions = [
   { id: 'seanime', name: 'SeaAnime Bridge' },
@@ -51,14 +64,136 @@ const defaultProviderOptions = [
   { id: 'consumet-animekai', name: 'Consumet AnimeKai' },
   { id: 'consumet-animepahe', name: 'Consumet AnimePahe' },
   { id: 'uniquestream', name: 'Anime UniqueStream' },
+  { id: 'tatakai-hindidubbed', name: 'Tatakai HindiDubbed' },
+  { id: 'tatakai-desidubanime', name: 'Tatakai DesiDubAnime' },
   { id: 'consumet', name: 'Consumet' }
 ];
+
+function readPlayerPrefs() {
+  try {
+    const raw = localStorage.getItem(PLAYER_PREFS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function savePlayerPrefs(next) {
+  const current = readPlayerPrefs();
+  const merged = { ...current, ...next };
+  localStorage.setItem(PLAYER_PREFS_KEY, JSON.stringify(merged));
+}
+
+function safeReadJsonStorage(key, storage = window.sessionStorage) {
+  try {
+    const raw = storage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function safeWriteJsonStorage(key, value, storage = window.sessionStorage) {
+  try {
+    storage.setItem(key, JSON.stringify(value));
+  } catch (_) {
+    // Ignore storage quota/private-mode failures.
+  }
+}
+
+function buildAnimeCacheKey() {
+  return `${WATCH_ANIME_CACHE_PREFIX}:${source}:${animeId}`;
+}
+
+function buildEpisodesCacheKey() {
+  return [
+    WATCH_EPISODES_CACHE_PREFIX,
+    source,
+    animeId,
+    selectedProvider || '',
+    selectedSeaProvider || '',
+    selectedDub ? 'dub' : 'sub'
+  ].join(':');
+}
+
+function isFreshCache(entry, ttlMs) {
+  if (!entry || typeof entry.ts !== 'number') return false;
+  return Date.now() - entry.ts < ttlMs;
+}
+
+function normalizeAnime(anime) {
+  if (!anime || typeof anime !== 'object') return null;
+  const genres = Array.isArray(anime.genres) ? anime.genres.filter(Boolean) : [];
+  return {
+    id: anime.id,
+    title: String(anime.title || 'Unknown title'),
+    poster: String(anime.poster || ''),
+    description: String(anime.description || 'No description available yet.'),
+    score: anime.score ?? '0.0',
+    year: anime.year ?? 'N/A',
+    type: anime.type ?? 'TV',
+    genres
+  };
+}
+
+function renderAnimeDetails(anime) {
+  if (!anime) return;
+  titleEl.textContent = anime.title;
+  posterEl.src = anime.poster || '';
+  posterEl.alt = anime.title || 'Poster';
+  descEl.textContent = anime.description;
+
+  const topGenres = Array.isArray(anime.genres) ? anime.genres.slice(0, 3) : [];
+  metaEl.innerHTML = `
+      <div class="pill accent">* ${anime.score || '0.0'}</div>
+      <div class="pill">${anime.year || 'N/A'}</div>
+      <div class="pill">${anime.type || 'TV'}</div>
+      ${topGenres.map((g) => `<div class="pill">${g}</div>`).join('')}
+    `;
+}
+
+function getSearchUserKey() {
+  return firebaseClient?.getCurrentUser?.()?.uid || 'guest';
+}
+
+function getRecentSearchStore() {
+  try {
+    return JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || '{}');
+  } catch (_) {
+    return {};
+  }
+}
+
+function pushRecentSearch(query) {
+  const term = String(query || '').trim();
+  if (!term) return;
+  const store = getRecentSearchStore();
+  const key = getSearchUserKey();
+  const list = Array.isArray(store[key]) ? store[key] : [];
+  store[key] = [term, ...list.filter((item) => item.toLowerCase() !== term.toLowerCase())].slice(0, 8);
+  localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(store));
+}
+
+function getRecentSearches(limit = 6) {
+  const store = getRecentSearchStore();
+  const key = getSearchUserKey();
+  const list = Array.isArray(store[key]) ? store[key] : [];
+  return list.slice(0, limit);
+}
+
+const savedPrefs = readPlayerPrefs();
+if (!hasQueryProvider && savedPrefs.provider) selectedProvider = String(savedPrefs.provider).toLowerCase();
+if (!hasQuerySeaProvider && savedPrefs.seaProvider) selectedSeaProvider = String(savedPrefs.seaProvider).toLowerCase();
+if (!hasQueryDub && typeof savedPrefs.dubbed === 'boolean') selectedDub = savedPrefs.dubbed;
+if (!hasQueryServer && savedPrefs.server) selectedServer = String(savedPrefs.server);
+if (!hasQueryQuality && savedPrefs.quality) selectedQuality = String(savedPrefs.quality);
 
 function ensureDubSelectElement() {
   const bindDubListener = (el) => {
     if (!el || el.dataset.boundDub === '1') return;
     el.addEventListener('change', async () => {
       selectedDub = el.value === 'dub';
+      savePlayerPrefs({ dubbed: selectedDub });
       updateUrlParams({ dubbed: selectedDub ? '1' : null });
       await loadEpisodeList();
     });
@@ -128,9 +263,20 @@ if (sidebarToggle) {
     localStorage.setItem('sidebarCollapsed', document.body.classList.contains('collapsed'));
   });
 }
-if (localStorage.getItem('sidebarCollapsed') === 'true') {
-  document.body.classList.add('collapsed');
+function syncSidebarMode() {
+  if (window.innerWidth <= 1100) {
+    // Ensure drawer navigation keeps text labels visible on small screens.
+    document.body.classList.remove('collapsed');
+    return;
+  }
+  if (localStorage.getItem('sidebarCollapsed') === 'true') {
+    document.body.classList.add('collapsed');
+  } else {
+    document.body.classList.remove('collapsed');
+  }
 }
+syncSidebarMode();
+window.addEventListener('resize', syncSidebarMode);
 
 document.addEventListener('click', (e) => {
   if (window.innerWidth > 1100) return;
@@ -612,6 +758,22 @@ async function loadEpisodeSource() {
 }
 
 async function loadEpisodeList() {
+  const cacheKey = buildEpisodesCacheKey();
+  const cached = safeReadJsonStorage(cacheKey, window.sessionStorage);
+  let renderedFromCache = false;
+
+  if (isFreshCache(cached, WATCH_EPISODES_CACHE_TTL_MS) && Array.isArray(cached?.episodes) && cached.episodes.length > 0) {
+    episodeData = cached.episodes;
+    if (!episodeData.some((ep) => ep.number === selectedEpisode) && episodeData.length > 0) {
+      selectedEpisode = episodeData[0].number;
+      updateUrlParams({ episode: selectedEpisode });
+    }
+    renderEpisodeList(episodeData);
+    updateEpisodeNavigation();
+    renderedFromCache = true;
+    loadEpisodeSource();
+  }
+
   try {
     const response = await fetch(withStreamApiBase('/api/onlinestream/episode-list'), {
       method: 'POST',
@@ -632,19 +794,23 @@ async function loadEpisodeList() {
     if (!episodeData.length) {
       throw new Error('No episodes returned for this anime/provider');
     }
+    safeWriteJsonStorage(cacheKey, { ts: Date.now(), episodes: episodeData }, window.sessionStorage);
     renderEpisodeList(episodeData);
 
     if (!episodeData.some(ep => ep.number === selectedEpisode) && episodeData.length > 0) {
       selectedEpisode = episodeData[0].number;
+      updateUrlParams({ episode: selectedEpisode });
     }
 
     updateEpisodeNavigation();
     await loadEpisodeSource();
   } catch (error) {
     console.error(error);
-    episodeData = [];
-    renderEpisodeList([]);
-    showToast(error.message || 'Failed to load episode list', 'error');
+    if (!renderedFromCache) {
+      episodeData = [];
+      renderEpisodeList([]);
+      showToast(error.message || 'Failed to load episode list', 'error');
+    }
   }
 }
 
@@ -720,18 +886,56 @@ async function loadSeaProviders() {
 
 // --- Quick Search Logic ---
 async function setupQuickSearch() {
-  const res = await fetch(`/api/anime?source=${source}`);
-  const payload = await parseApiJson(res);
-  catalog = Array.isArray(payload) ? payload : [];
+  try {
+    const res = await fetch(`/api/anime?source=${source}&page=1&perPage=80`);
+    const payload = await parseApiJson(res);
+    catalog = Array.isArray(payload) ? payload : [];
+  } catch (_) {
+    catalog = [];
+  }
 
-  searchInput.addEventListener('input', (e) => {
+  searchInput.addEventListener('focus', () => {
+    if (!searchInput.value.trim()) {
+      renderRecentSearches();
+    }
+  });
+
+  searchInput.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    const first = searchResults.querySelector('.search-item');
+    if (first?.href) {
+      window.location.href = first.href;
+    }
+  });
+
+  searchInput.addEventListener('input', async (e) => {
     const term = e.target.value.trim().toLowerCase();
-    if (!term) {
-      searchResults.classList.remove('active');
+    if (!term || term.length < 2) {
+      renderRecentSearches();
       return;
     }
-    const filtered = catalog.filter(a => a.title.toLowerCase().includes(term)).slice(0, 5);
-    renderSearchResults(filtered);
+
+    if (searchAbortController) searchAbortController.abort();
+    searchAbortController = new AbortController();
+
+    try {
+      const response = await fetch(
+        `/api/anime?source=${source}&search=${encodeURIComponent(term)}&page=1&perPage=8`,
+        { signal: searchAbortController.signal }
+      );
+      const fromApi = response.ok ? await response.json() : [];
+      const localMatches = catalog.filter((item) => item.title.toLowerCase().includes(term)).slice(0, 8);
+      const byId = new Map();
+      [...(Array.isArray(fromApi) ? fromApi : []), ...localMatches].forEach((anime) => {
+        if (anime?.id == null) return;
+        byId.set(String(anime.id), anime);
+      });
+      renderSearchResults(Array.from(byId.values()).slice(0, 8));
+    } catch (error) {
+      if (error?.name === 'AbortError') return;
+      const fallback = catalog.filter((item) => item.title.toLowerCase().includes(term)).slice(0, 8);
+      renderSearchResults(fallback);
+    }
   });
 }
 
@@ -741,12 +945,41 @@ function renderSearchResults(items) {
     const node = searchResultTemplate.content.cloneNode(true);
     const link = node.querySelector('.search-item');
     link.href = `/watch.html?id=${anime.id}&source=${source}`;
-    link.querySelector('.search-poster').src = anime.poster;
+    link.addEventListener('click', () => pushRecentSearch(anime.title));
+    const searchPoster = link.querySelector('.search-poster');
+    searchPoster.src = anime.poster;
+    searchPoster.alt = `${anime.title} poster`;
     link.querySelector('.search-title').textContent = anime.title;
     link.querySelector('.search-meta').textContent = `${anime.year || 'N/A'}`;
     searchResults.appendChild(node);
   });
   searchResults.classList.toggle('active', items.length > 0);
+}
+
+function renderRecentSearches() {
+  const recent = getRecentSearches(6);
+  if (!recent.length) {
+    searchResults.classList.remove('active');
+    return;
+  }
+  const resolved = recent
+    .map((term) => catalog.find((anime) => anime.title.toLowerCase() === term.toLowerCase()) || null)
+    .filter(Boolean)
+    .slice(0, 6);
+  if (resolved.length) {
+    renderSearchResults(resolved);
+    return;
+  }
+  searchResults.innerHTML = recent
+    .map((term) => `<button class="search-recent-chip" type="button">${term}</button>`)
+    .join('');
+  searchResults.classList.add('active');
+  searchResults.querySelectorAll('.search-recent-chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      searchInput.value = chip.textContent || '';
+      searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  });
 }
 
 searchInput.addEventListener('blur', () => {
@@ -817,6 +1050,13 @@ function toggleCaptionsShortcut() {
 
 async function init() {
   try {
+    if (!animeId || Number.isNaN(Number(animeId))) {
+      titleEl.textContent = 'Invalid title';
+      descEl.textContent = 'Missing or invalid anime id in URL.';
+      showToast('Invalid anime id in URL', 'error');
+      return;
+    }
+
     ensureDubSelectElement();
     try {
       const configRes = await fetch('/api/client-config');
@@ -829,19 +1069,26 @@ async function init() {
     if (!window.Plyr) {
       showToast('Advanced player library failed to load. Check network filters.', 'error');
     }
+    const animeCacheKey = buildAnimeCacheKey();
+    const cachedAnimeEntry = safeReadJsonStorage(animeCacheKey, window.sessionStorage);
+    if (isFreshCache(cachedAnimeEntry, WATCH_ANIME_CACHE_TTL_MS)) {
+      const normalizedCached = normalizeAnime(cachedAnimeEntry.data);
+      if (normalizedCached) {
+        renderAnimeDetails(normalizedCached);
+      }
+    }
+
     const response = await fetch(`/api/anime/${animeId}?source=${source}`);
-    const anime = await parseApiJson(response);
-
-    titleEl.textContent = anime.title;
-    posterEl.src = anime.poster;
-    descEl.textContent = anime.description;
-
-    metaEl.innerHTML = `
-      <div class="pill accent">* ${anime.score || '0.0'}</div>
-      <div class="pill">${anime.year || 'N/A'}</div>
-      <div class="pill">${anime.type || 'TV'}</div>
-      ${anime.genres.slice(0, 3).map(g => `<div class="pill">${g}</div>`).join('')}
-    `;
+    const animePayload = await parseApiJson(response);
+    if (!response.ok) {
+      throw new Error(animePayload?.error || `Failed to load anime (${response.status})`);
+    }
+    const anime = normalizeAnime(animePayload);
+    if (!anime) {
+      throw new Error('Anime payload was empty');
+    }
+    renderAnimeDetails(anime);
+    safeWriteJsonStorage(animeCacheKey, { ts: Date.now(), data: anime }, window.sessionStorage);
 
     // Fetch providers (with robust fallback so UI stays usable).
     let providers = [];
@@ -900,11 +1147,18 @@ async function init() {
     }
     providerSelectEl.value = selectedProvider;
     updateUrlParams({ provider: selectedProvider });
+    savePlayerPrefs({ provider: selectedProvider });
     renderDubOption();
 
     await loadSeaProviders();
     renderDubOption();
     updateUrlParams({ dubbed: selectedDub ? '1' : null });
+    savePlayerPrefs({
+      seaProvider: selectedSeaProvider || '',
+      dubbed: selectedDub,
+      server: selectedServer || '',
+      quality: selectedQuality || 'auto'
+    });
     await loadEpisodeList();
     setupQuickSearch();
   } catch (error) {
@@ -914,6 +1168,7 @@ async function init() {
 
 providerSelectEl.addEventListener('change', async () => {
   selectedProvider = providerSelectEl.value;
+  savePlayerPrefs({ provider: selectedProvider });
   const keepSeaProvider = (selectedProvider === 'seanime' || selectedProvider === 'consumet') ? selectedSeaProvider : null;
   updateUrlParams({ provider: selectedProvider, seaProvider: keepSeaProvider || null });
   await loadSeaProviders();
@@ -923,6 +1178,7 @@ providerSelectEl.addEventListener('change', async () => {
 
 seaProviderSelectEl.addEventListener('change', async () => {
   selectedSeaProvider = seaProviderSelectEl.value;
+  savePlayerPrefs({ seaProvider: selectedSeaProvider || '' });
   updateUrlParams({ seaProvider: selectedSeaProvider || null });
   renderDubOption();
   await loadEpisodeList();
@@ -930,11 +1186,13 @@ seaProviderSelectEl.addEventListener('change', async () => {
 
 serverSelectEl.addEventListener('change', () => {
   selectedServer = serverSelectEl.value;
+  savePlayerPrefs({ server: selectedServer || '' });
   renderAndPlay();
 });
 
 qualitySelectEl.addEventListener('change', () => {
   selectedQuality = qualitySelectEl.value;
+  savePlayerPrefs({ quality: selectedQuality || 'auto' });
   renderAndPlay();
 });
 
@@ -957,6 +1215,7 @@ document.addEventListener('keydown', (event) => {
   if (key === 'm') { event.preventDefault(); toggleMute(); return; }
   if (key === 'n') { event.preventDefault(); goNextEpisode(); return; }
   if (key === 's') { event.preventDefault(); skipIntro(); return; }
+  if (key === 'o') { event.preventDefault(); skipOutro(); return; }
   if (key === '?') { event.preventDefault(); window.AnikaiFeatures?.toggleShortcutsPanel(); }
 });
 
@@ -992,6 +1251,17 @@ function skipIntro() {
   showToast('Intro skipped (+85s)');
 }
 
+function skipOutro() {
+  const v = getPlayerEl();
+  if (!v || !Number.isFinite(v.duration) || v.duration <= 0) {
+    showToast('Outro skip is unavailable right now', 'error');
+    return;
+  }
+  const target = Math.max(0, v.duration - 8);
+  v.currentTime = target;
+  showToast('Skipped to outro end');
+}
+
 // ── Skip Intro Button in player ─────────────────────────
 function injectSkipIntroBtn() {
   if (document.getElementById('skipIntroBtn')) return;
@@ -1022,6 +1292,34 @@ function injectSkipIntroBtn() {
   // Re-schedule on episode change
   document.addEventListener('anikai:episodeChanged', scheduleSkipBtn);
   scheduleSkipBtn();
+}
+
+function injectSkipOutroBtn() {
+  if (document.getElementById('skipOutroBtn')) return;
+  const btn = document.createElement('button');
+  btn.id = 'skipOutroBtn';
+  btn.className = 'skip-intro-btn';
+  btn.textContent = 'Skip Outro';
+  btn.style.right = '1rem';
+  btn.style.bottom = '1rem';
+  btn.addEventListener('click', skipOutro);
+  playerHostEl.style.position = 'relative';
+  playerHostEl.appendChild(btn);
+
+  function scheduleOutroBtn() {
+    btn.classList.remove('show');
+    const v = getPlayerEl();
+    if (!v) return;
+    const onTime = () => {
+      if (!Number.isFinite(v.duration) || v.duration <= 0) return;
+      const nearEnd = v.currentTime >= Math.max(0, v.duration - 120) && v.currentTime < v.duration - 2;
+      btn.classList.toggle('show', nearEnd);
+    };
+    v.addEventListener('timeupdate', onTime);
+  }
+
+  document.addEventListener('anikai:episodeChanged', scheduleOutroBtn);
+  scheduleOutroBtn();
 }
 
 // ── Auto-Play Next Episode ────────────────────────────
@@ -1105,6 +1403,18 @@ function saveWatchPosition() {
   const F = window.AnikaiFeatures;
   if (!v || !F || !animeId || !v.currentTime || !v.duration) return;
   F.WatchProgress.save(animeId, selectedEpisode, v.currentTime, v.duration);
+  const user = firebaseClient?.getCurrentUser?.();
+  if (firebaseClient?.ready && firebaseClient.firestoreEnabled && user?.uid) {
+    firebaseClient.saveWatchProgress(user.uid, animeId, {
+      episode: selectedEpisode,
+      currentTime: v.currentTime,
+      duration: v.duration,
+      pct: v.duration ? (v.currentTime / v.duration) : 0,
+      ts: Date.now()
+    }).catch((error) => {
+      console.error('Watch progress sync failed', error);
+    });
+  }
 }
 
 function restoreWatchPosition() {
@@ -1228,6 +1538,7 @@ changeEpisode = async function (num) {
     restoreWatchPosition();
     watchForVideoEnd();
     injectSkipIntroBtn();
+    injectSkipOutroBtn();
     document.dispatchEvent(new CustomEvent('anikai:episodeChanged', { detail: { num } }));
   }, 800);
 };
@@ -1239,6 +1550,7 @@ async function initWithFeatures() {
   setTimeout(() => {
     injectWatchExtras();
     injectSkipIntroBtn();
+    injectSkipOutroBtn();
     watchForVideoEnd();
     restoreWatchPosition();
     window.AnikaiFeatures?.injectTopBarExtras?.();
