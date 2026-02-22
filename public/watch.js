@@ -48,6 +48,16 @@ let episodeData = [];
 let catalog = []; // For quick search
 let subtitleResults = [];
 let availableProviderIds = [];
+const defaultProviderOptions = [
+  { id: 'seanime', name: 'SeaAnime Bridge' },
+  { id: 'anicrush', name: 'AniCrush' },
+  { id: 'animesaturn', name: 'AnimeSaturn' },
+  { id: 'hianime', name: 'HiAnime' },
+  { id: 'sudatchi', name: 'Sudatchi' },
+  { id: 'anizone', name: 'AniZone' },
+  { id: 'uniquestream', name: 'Anime UniqueStream' },
+  { id: 'consumet', name: 'Consumet' }
+];
 
 function ensureDubSelectElement() {
   const bindDubListener = (el) => {
@@ -777,6 +787,19 @@ async function parseApiJson(response) {
   }
 }
 
+function normalizeProviderList(payload) {
+  const list = Array.isArray(payload)
+    ? payload
+    : (Array.isArray(payload?.data) ? payload.data : []);
+
+  return list
+    .map((item) => ({
+      id: String(item?.id || '').trim().toLowerCase(),
+      name: String(item?.name || item?.id || '').trim()
+    }))
+    .filter((item) => item.id);
+}
+
 function isTypingContext(target) {
   if (!target || !(target instanceof HTMLElement)) return false;
   const tag = target.tagName.toLowerCase();
@@ -838,10 +861,27 @@ async function init() {
       ${anime.genres.slice(0, 3).map(g => `<div class="pill">${g}</div>`).join('')}
     `;
 
-    // Fetch providers
-    const pRes = await fetch('/api/onlinestream/providers');
-    const providers = await parseApiJson(pRes);
-    providerSelectEl.innerHTML = providers.map(p => `<option value="${p.id}">Provider: ${p.name}</option>`).join('');
+    // Fetch providers (with robust fallback so UI stays usable).
+    let providers = [];
+    try {
+      const pRes = await fetch('/api/onlinestream/providers');
+      const payload = await parseApiJson(pRes);
+      if (!pRes.ok) {
+        throw new Error(payload?.error || `Provider API failed (${pRes.status})`);
+      }
+      providers = normalizeProviderList(payload);
+    } catch (providerError) {
+      console.error(providerError);
+      showToast('Provider API failed, using local fallback list.', 'error');
+    }
+
+    const merged = new Map(defaultProviderOptions.map((p) => [p.id, { ...p }]));
+    providers.forEach((provider) => {
+      merged.set(provider.id, provider);
+    });
+    providers = Array.from(merged.values());
+
+    providerSelectEl.innerHTML = providers.map((p) => `<option value="${p.id}">Provider: ${p.name}</option>`).join('');
     const providerIds = providers.map((p) => p.id);
     availableProviderIds = providerIds.slice();
 
@@ -879,7 +919,8 @@ async function init() {
 
 providerSelectEl.addEventListener('change', async () => {
   selectedProvider = providerSelectEl.value;
-  updateUrlParams({ provider: selectedProvider, seaProvider: selectedProvider === 'seanime' ? selectedSeaProvider : null });
+  const keepSeaProvider = (selectedProvider === 'seanime' || selectedProvider === 'consumet') ? selectedSeaProvider : null;
+  updateUrlParams({ provider: selectedProvider, seaProvider: keepSeaProvider || null });
   await loadSeaProviders();
   renderDubOption();
   await loadEpisodeList();
