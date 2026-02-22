@@ -7,3 +7,4 @@ data/auth/anilist-token.json
 .env.*
 .vercel
 .env*.local
+consumet/
