@@ -37,6 +37,10 @@ const WATCH_ANIME_CACHE_PREFIX = 'anikai_watch_anime_v1';
 const WATCH_EPISODES_CACHE_PREFIX = 'anikai_watch_episodes_v1';
 const WATCH_ANIME_CACHE_TTL_MS = 1000 * 60 * 60 * 12; // 12h
 const WATCH_EPISODES_CACHE_TTL_MS = 1000 * 60 * 15; // 15m
+const ADSTERRA_SCRIPT_SRC = 'https://pl28774943.effectivegatecpm.com/be/a8/ac/bea8ac581664f9ee80688dd92d9263ca.js';
+const ADSTERRA_SESSION_KEY = 'anikai_adsterra_loaded_v1';
+const ADSTERRA_LAST_TS_KEY = 'anikai_adsterra_last_ts_v1';
+const ADSTERRA_COOLDOWN_MS = 1000 * 60 * 15; // 15m
 
 let hlsInstance = null;
 let plyrInstance = null;
@@ -187,6 +191,14 @@ if (!hasQuerySeaProvider && savedPrefs.seaProvider) selectedSeaProvider = String
 if (!hasQueryDub && typeof savedPrefs.dubbed === 'boolean') selectedDub = savedPrefs.dubbed;
 if (!hasQueryServer && savedPrefs.server) selectedServer = String(savedPrefs.server);
 if (!hasQueryQuality && savedPrefs.quality) selectedQuality = String(savedPrefs.quality);
+
+function triggerAdsterra(reason = '') {
+  const F = window.AnikaiFeatures;
+  if (F && typeof F.triggerPopunder === 'function') {
+    return F.triggerPopunder(reason);
+  }
+  return false;
+}
 
 function ensureDubSelectElement() {
   const bindDubListener = (el) => {
@@ -477,6 +489,11 @@ function setupPlyr(playerEl) {
   return plyrInstance;
 }
 
+function shouldUseNativePlayerForProvider() {
+  const providerValue = String(providerSelectEl?.value || selectedProvider || '').toLowerCase();
+  return providerValue === 'hianime';
+}
+
 function setAudioSelectState(tracks = [], selectedIndex = -1) {
   if (!audioSelectEl) return;
   audioSelectEl.innerHTML = '';
@@ -611,6 +628,7 @@ function tryNextSourceFallback() {
 }
 
 function playSelectedSource(sourceItem) {
+  triggerAdsterra('play-intent');
   if (!sourceItem) {
     playerHostEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#666;font-weight:600;">No stream available for this episode</div>';
     showToast('No stream available for this episode', 'error');
@@ -639,7 +657,10 @@ function playSelectedSource(sourceItem) {
   }
 
   const playerEl = resetPlayerHost();
-  setupPlyr(playerEl);
+  const useNativePlayer = shouldUseNativePlayerForProvider();
+  if (!useNativePlayer) {
+    setupPlyr(playerEl);
+  }
   attachProviderSubtitles(playerEl, sourceItem);
   setAudioSelectState([], -1);
 
@@ -715,7 +736,10 @@ function renderEpisodeList(episodes) {
     item.className = `ep-btn-premium ${episode.number === selectedEpisode ? 'active' : ''}`;
     item.textContent = episode.number;
     item.dataset.num = episode.number;
-    item.addEventListener('click', () => changeEpisode(episode.number));
+    item.addEventListener('click', () => {
+      triggerAdsterra('episode-switch');
+      changeEpisode(episode.number);
+    });
     episodeListEl.appendChild(item);
   });
 }
@@ -895,10 +919,12 @@ async function setupQuickSearch() {
   }
 
   searchInput.addEventListener('focus', () => {
+    triggerAdsterra('search-focus');
     if (!searchInput.value.trim()) {
       renderRecentSearches();
     }
   });
+  searchInput.addEventListener('click', () => triggerAdsterra('search-click'));
 
   searchInput.addEventListener('keydown', (event) => {
     if (event.key !== 'Enter') return;

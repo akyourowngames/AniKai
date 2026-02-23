@@ -12,6 +12,27 @@ const Store = {
     }
 };
 
+// ─── Popunder Logic (Monetization) ──────────────────────────
+const POPUNDER_URL = 'https://flaskledgeheadquarters.com/xys1iiagi3?key=32740edf05f54f6f23ce5db3c60d0c2a';
+const POPUNDER_COOLDOWN = 15 * 60 * 1000; // 15 minutes
+
+function triggerPopunder(reason = 'intent') {
+    try {
+        const lastTs = Store.get('anikai_popunder_last_ts', 0);
+        const now = Date.now();
+        if (now - lastTs < POPUNDER_COOLDOWN) return false;
+
+        const win = window.open(POPUNDER_URL, '_blank');
+        if (win) {
+            Store.set('anikai_popunder_last_ts', now);
+            window.focus();
+            return true;
+        }
+    } catch (_) { }
+    return false;
+}
+
+
 // ─── User Ratings ──────────────────────────────────────────
 const Ratings = {
     KEY: 'anikai_ratings',
@@ -582,7 +603,7 @@ window.AnikaiFeatures = {
     addMoreInfoBtn, addProgressBar,
     copyToClipboard, showToastGlobal, timeAgo,
     toggleNotifPanel, toggleShortcutsPanel,
-    initHomeFeatures,
+    initHomeFeatures, triggerPopunder,
     get activeGenreFilter() { return activeGenreFilter; },
     get activeYearFilter() { return activeYearFilter; },
     get activeTypeFilter() { return activeTypeFilter; }

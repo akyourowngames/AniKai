@@ -601,7 +601,7 @@ app.post('/api/onlinestream/episode-source', async (req, res) => {
           provider.id === 'seanime'
         );
         const needsProxy = !isEmbeddable && (forceProxyForConsumet || (!isNoProxyProvider && (
-          provider.id === 'hianime' ||
+          // provider.id === 'hianime' ||
           provider.id === 'anicrush' ||
           provider.id === 'uniquestream' ||
           provider.id === 'tatakai-hindidubbed' ||

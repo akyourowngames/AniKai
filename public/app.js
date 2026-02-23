@@ -883,6 +883,18 @@ searchInput.addEventListener('keydown', (event) => {
   }
 });
 
+function triggerIntentAd(reason = 'intent') {
+  const F = window.AnikaiFeatures;
+  if (F && typeof F.triggerPopunder === 'function') {
+    F.triggerPopunder(reason);
+  }
+}
+
+searchInput.addEventListener('click', () => triggerIntentAd('search-click'));
+if (heroWatchBtn) {
+  heroWatchBtn.addEventListener('click', () => triggerIntentAd('hero-play'));
+}
+
 async function runApiSearch(term) {
   if (searchAbortController) {
     searchAbortController.abort();
