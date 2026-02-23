@@ -1,0 +1,1568 @@
+{
+  "timestamp": "2026-02-05T19:44:39.212Z",
+  "target": "https://animelok.site",
+  "summary": {
+    "total": 153,
+    "successful": 2,
+    "redirects": 0,
+    "clientErrors": 151,
+    "serverErrors": 0,
+    "jsonEndpoints": 2
+  },
+  "workingEndpoints": [
+    {
+      "path": "/api/anime/21/episodes-range?page=0&lang=JAPANESE&pageSize=10",
+      "type": "JSON",
+      "size": 30
+    },
+    {
+      "path": "/api/anime/21/episodes-range?page=0&lang=ENGLISH&pageSize=10",
+      "type": "JSON",
+      "size": 30
+    }
+  ],
+  "jsonEndpoints": [
+    {
+      "path": "/api/anime/21/episodes-range?page=0&lang=JAPANESE&pageSize=10",
+      "size": 30,
+      "preview": "{\"episodes\":[],\"totalPages\":0}"
+    },
+    {
+      "path": "/api/anime/21/episodes-range?page=0&lang=ENGLISH&pageSize=10",
+      "size": 30,
+      "preview": "{\"episodes\":[],\"totalPages\":0}"
+    }
+  ],
+  "allResults": [
+    {
+      "path": "/api",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/v1",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/v2",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/21/episodes-range?page=0&lang=JAPANESE&pageSize=10",
+      "method": "GET",
+      "status": 200,
+      "contentType": "application/json",
+      "contentLength": 30,
+      "isJson": true,
+      "isHtml": false,
+      "sample": "{\"episodes\":[],\"totalPages\":0}"
+    },
+    {
+      "path": "/api/anime/21/episodes-range?page=0&lang=ENGLISH&pageSize=10",
+      "method": "GET",
+      "status": 200,
+      "contentType": "application/json",
+      "contentLength": 30,
+      "isJson": true,
+      "isHtml": false,
+      "sample": "{\"episodes\":[],\"totalPages\":0}"
+    },
+    {
+      "path": "/api/anime/21/episodes/1",
+      "method": "GET",
+      "status": 404,
+      "contentType": "application/json",
+      "contentLength": 29,
+      "isJson": true,
+      "isHtml": false,
+      "sample": "{\"error\":\"Episode not found\"}"
+    },
+    {
+      "path": "/api/anime/21/episodes/1?lang=sub",
+      "method": "GET",
+      "status": 404,
+      "contentType": "application/json",
+      "contentLength": 29,
+      "isJson": true,
+      "isHtml": false,
+      "sample": "{\"error\":\"Episode not found\"}"
+    },
+    {
+      "path": "/api/anime/21/episodes/1?lang=dub",
+      "method": "GET",
+      "status": 404,
+      "contentType": "application/json",
+      "contentLength": 29,
+      "isJson": true,
+      "isHtml": false,
+      "sample": "{\"error\":\"Episode not found\"}"
+    },
+    {
+      "path": "/api/comments",
+      "method": "GET",
+      "status": 400,
+      "contentType": "application/json",
+      "contentLength": 45,
+      "isJson": true,
+      "isHtml": false,
+      "sample": "{\"success\":false,\"error\":\"Anime ID required\"}"
+    },
+    {
+      "path": "/api/home",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/index",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/featured",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/spotlight",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/banner",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/slider",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/carousel",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/animes",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/list",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/all",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/popular",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/trending",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/latest",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/recent",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/new",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/top",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/top-airing",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/top-rated",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/most-watched",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/most-popular",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/completed",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/ongoing",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/upcoming",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/episodes",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/episode",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/episodes/latest",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/episodes/recent",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/recent-episodes",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/latest-episodes",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/search",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/search?q=naruto",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/search?keyword=naruto",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/search?query=naruto",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/filter",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/filters",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/advanced-search",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/genres",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/genre",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/categories",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/category",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/tags",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/types",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/schedule",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/calendar",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/airing",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/airing-schedule",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/release-schedule",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/movies",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/movie",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/films",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/series",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/tv",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/shows",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/ova",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/ona",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/special",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/specials",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/seasons",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/season",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/season/winter",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/season/spring",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/season/summer",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/season/fall",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/season/2024",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/season/2025",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/stream",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/sources",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/servers",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/watch",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/embed",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/player",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/video",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/user",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/users",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/auth",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/login",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/register",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/profile",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/watchlist",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/favorites",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/history",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/bookmarks",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/comments",
+      "method": "GET",
+      "status": 400,
+      "contentType": "application/json",
+      "contentLength": 45,
+      "isJson": true,
+      "isHtml": false,
+      "sample": "{\"success\":false,\"error\":\"Anime ID required\"}"
+    },
+    {
+      "path": "/api/reviews",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/ratings",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/random",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/suggestions",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/recommendations",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/similar",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/related",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/stats",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/statistics",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/info",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/status",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/health",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/version",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/config",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/_next/data",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/revalidate",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/preview",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/exit-preview",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/1",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/100",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/naruto",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/one-piece",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/1/episodes",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/1/episodes/1",
+      "method": "GET",
+      "status": 404,
+      "contentType": "application/json",
+      "contentLength": 29,
+      "isJson": true,
+      "isHtml": false,
+      "sample": "{\"error\":\"Episode not found\"}"
+    },
+    {
+      "path": "/api/anime/naruto/episodes",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/naruto/episodes/1",
+      "method": "GET",
+      "status": 404,
+      "contentType": "application/json",
+      "contentLength": 29,
+      "isJson": true,
+      "isHtml": false,
+      "sample": "{\"error\":\"Episode not found\"}"
+    },
+    {
+      "path": "/api/v1/anime",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/v1/home",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/v1/search",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/v1/genres",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/graphql",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/graphql",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/sitemap",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/feed",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/rss",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/1000",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/attack-on-titan",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/100/episodes",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/anime/100/episodes/1",
+      "method": "GET",
+      "status": 404,
+      "contentType": "application/json",
+      "contentLength": 29,
+      "isJson": true,
+      "isHtml": false,
+      "sample": "{\"error\":\"Episode not found\"}"
+    },
+    {
+      "path": "/api/genre/action",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/genre/adventure",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/genre/comedy",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/genre/drama",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/genre/fantasy",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/genre/romance",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/genre/sci-fi",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/genre/horror",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/search/naruto",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/search/one",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/search/attack",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/watch/1",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/watch/naruto",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/watch/naruto-1",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/stream/1",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/stream/100",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/stream/naruto",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/episode/1",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/episode/100",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    },
+    {
+      "path": "/api/episode/1000",
+      "method": "GET",
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 15266,
+      "isJson": false,
+      "isHtml": true,
+      "sample": "[404 HTML Page]"
+    }
+  ]
+}
