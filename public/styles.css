@@ -2066,15 +2066,17 @@ body.theater-mode .content-wrapper {
   width: 100%;
 }
 
-/* Force Adsterra native container to match anime-grid */
+/* Adsterra renders its own layout — only set width, font, link color */
 #container-b7b05568585173256a38bfef51f1ed41 {
-  display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)) !important;
-  gap: 1.1rem !important;
-  margin-bottom: 2rem !important;
-  list-style: none !important;
-  padding: 0 !important;
+  width: 100% !important;
+  font-family: 'Inter', system-ui, sans-serif;
 }
+
+#container-b7b05568585173256a38bfef51f1ed41 a {
+  color: var(--text-main) !important;
+  text-decoration: none !important;
+}
+
 
 /* Card base â€” match .card */
 #container-b7b05568585173256a38bfef51f1ed41 a,
