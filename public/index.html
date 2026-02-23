@@ -17,9 +17,8 @@
   <title>Anikai - Free Anime Streaming</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="preload"
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" as="style"
-    onload="this.onload=null;this.rel='stylesheet'" />
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    as="style" onload="this.onload=null;this.rel='stylesheet'" />
   <noscript>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
       rel="stylesheet" />
@@ -146,7 +145,8 @@
               </svg>
               WATCH NOW
             </a>
-            <button id="heroShareBtn" class="hero-share-btn" type="button" title="Share current anime" aria-label="Share current anime">
+            <button id="heroShareBtn" class="hero-share-btn" type="button" title="Share current anime"
+              aria-label="Share current anime">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="18" cy="5" r="3"></circle>
                 <circle cx="6" cy="12" r="3"></circle>
@@ -171,6 +171,18 @@
           <div id="latestGrid" class="anime-grid"></div>
         </section>
 
+        <!-- Native Ad Banner #1 — blends into anime grid -->
+        <section class="native-ad-section" aria-label="Sponsored">
+          <div class="section-header">
+            <div class="section-title">Featured <span class="native-ad-tag">Sponsored</span></div>
+          </div>
+          <div class="native-ad-grid-wrap">
+            <script async="async" data-cfasync="false"
+              src="https://flaskledgeheadquarters.com/b7b05568585173256a38bfef51f1ed41/invoke.js"></script>
+            <div id="container-b7b05568585173256a38bfef51f1ed41"></div>
+          </div>
+        </section>
+
         <!-- Trending -->
         <section id="trending">
           <div class="section-header">
@@ -183,7 +195,8 @@
         <section id="continueWatchingSection" style="display: none;">
           <div class="section-header">
             <div class="section-title">Continue Watching</div>
-            <button id="continueResumeBtn" class="btn-action continue-resume-btn" type="button" style="display:none;">Resume Latest</button>
+            <button id="continueResumeBtn" class="btn-action continue-resume-btn" type="button"
+              style="display:none;">Resume Latest</button>
           </div>
           <div id="continueGrid" class="anime-grid"></div>
         </section>
@@ -221,11 +234,34 @@
         <h2>A-Z List</h2>
         <p>Browse anime titles by letter and discover your next watch.</p>
         <div class="az-links">
-          <a href="/" aria-label="Browse all anime titles">All</a><a href="/?letter=0-9" aria-label="Browse anime titles starting with a number">0-9</a><a href="/?letter=A" aria-label="Browse anime titles starting with A">A</a><a href="/?letter=B" aria-label="Browse anime titles starting with B">B</a><a href="/?letter=C" aria-label="Browse anime titles starting with C">C</a><a href="/?letter=D" aria-label="Browse anime titles starting with D">D</a><a
-            href="/?letter=E" aria-label="Browse anime titles starting with E">E</a><a href="/?letter=F" aria-label="Browse anime titles starting with F">F</a><a href="/?letter=G" aria-label="Browse anime titles starting with G">G</a><a href="/?letter=H" aria-label="Browse anime titles starting with H">H</a><a href="/?letter=I" aria-label="Browse anime titles starting with I">I</a><a href="/?letter=J" aria-label="Browse anime titles starting with J">J</a><a
-            href="/?letter=K" aria-label="Browse anime titles starting with K">K</a><a href="/?letter=L" aria-label="Browse anime titles starting with L">L</a><a href="/?letter=M" aria-label="Browse anime titles starting with M">M</a><a href="/?letter=N" aria-label="Browse anime titles starting with N">N</a><a href="/?letter=O" aria-label="Browse anime titles starting with O">O</a><a href="/?letter=P" aria-label="Browse anime titles starting with P">P</a><a
-            href="/?letter=Q" aria-label="Browse anime titles starting with Q">Q</a><a href="/?letter=R" aria-label="Browse anime titles starting with R">R</a><a href="/?letter=S" aria-label="Browse anime titles starting with S">S</a><a href="/?letter=T" aria-label="Browse anime titles starting with T">T</a><a href="/?letter=U" aria-label="Browse anime titles starting with U">U</a><a href="/?letter=V" aria-label="Browse anime titles starting with V">V</a><a
-            href="/?letter=W" aria-label="Browse anime titles starting with W">W</a><a href="/?letter=X" aria-label="Browse anime titles starting with X">X</a><a href="/?letter=Y" aria-label="Browse anime titles starting with Y">Y</a><a href="/?letter=Z" aria-label="Browse anime titles starting with Z">Z</a>
+          <a href="/" aria-label="Browse all anime titles">All</a><a href="/?letter=0-9"
+            aria-label="Browse anime titles starting with a number">0-9</a><a href="/?letter=A"
+            aria-label="Browse anime titles starting with A">A</a><a href="/?letter=B"
+            aria-label="Browse anime titles starting with B">B</a><a href="/?letter=C"
+            aria-label="Browse anime titles starting with C">C</a><a href="/?letter=D"
+            aria-label="Browse anime titles starting with D">D</a><a href="/?letter=E"
+            aria-label="Browse anime titles starting with E">E</a><a href="/?letter=F"
+            aria-label="Browse anime titles starting with F">F</a><a href="/?letter=G"
+            aria-label="Browse anime titles starting with G">G</a><a href="/?letter=H"
+            aria-label="Browse anime titles starting with H">H</a><a href="/?letter=I"
+            aria-label="Browse anime titles starting with I">I</a><a href="/?letter=J"
+            aria-label="Browse anime titles starting with J">J</a><a href="/?letter=K"
+            aria-label="Browse anime titles starting with K">K</a><a href="/?letter=L"
+            aria-label="Browse anime titles starting with L">L</a><a href="/?letter=M"
+            aria-label="Browse anime titles starting with M">M</a><a href="/?letter=N"
+            aria-label="Browse anime titles starting with N">N</a><a href="/?letter=O"
+            aria-label="Browse anime titles starting with O">O</a><a href="/?letter=P"
+            aria-label="Browse anime titles starting with P">P</a><a href="/?letter=Q"
+            aria-label="Browse anime titles starting with Q">Q</a><a href="/?letter=R"
+            aria-label="Browse anime titles starting with R">R</a><a href="/?letter=S"
+            aria-label="Browse anime titles starting with S">S</a><a href="/?letter=T"
+            aria-label="Browse anime titles starting with T">T</a><a href="/?letter=U"
+            aria-label="Browse anime titles starting with U">U</a><a href="/?letter=V"
+            aria-label="Browse anime titles starting with V">V</a><a href="/?letter=W"
+            aria-label="Browse anime titles starting with W">W</a><a href="/?letter=X"
+            aria-label="Browse anime titles starting with X">X</a><a href="/?letter=Y"
+            aria-label="Browse anime titles starting with Y">Y</a><a href="/?letter=Z"
+            aria-label="Browse anime titles starting with Z">Z</a>
         </div>
       </div>
       <div class="footer-bottom">
@@ -285,8 +321,8 @@
         3. You will be redirected back and token is saved to this website
       </p>
       <div class="auth-actions">
-        <a id="openAnilistTokenPage" class="btn-primary auth-btn auth-btn-primary" href="/api/auth/anilist/start" target="_blank"
-          rel="noopener noreferrer">Open Token Page</a>
+        <a id="openAnilistTokenPage" class="btn-primary auth-btn auth-btn-primary" href="/api/auth/anilist/start"
+          target="_blank" rel="noopener noreferrer">Open Token Page</a>
         <button id="closeAnilistModal" class="btn-action auth-btn auth-btn-ghost">Close</button>
       </div>
       <label for="anilistTokenInput">Optional: Paste AniList Token Manually</label>
@@ -311,7 +347,8 @@
       <input id="authPasswordInput" type="password" placeholder="At least 6 characters" />
       <div class="auth-actions">
         <button id="firebaseGoogleBtn" class="btn-primary auth-btn auth-btn-google">Continue with Google</button>
-        <button id="firebaseAuthConfirmBtn" class="btn-action auth-btn auth-btn-secondary">Email Login / Sign Up</button>
+        <button id="firebaseAuthConfirmBtn" class="btn-action auth-btn auth-btn-secondary">Email Login / Sign
+          Up</button>
         <button id="firebaseAuthCancelBtn" class="btn-action auth-btn auth-btn-ghost">Cancel</button>
       </div>
       <div id="firebaseAuthStatus" class="auth-status"></div>

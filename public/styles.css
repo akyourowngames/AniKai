@@ -2039,3 +2039,115 @@ body.theater-mode .content-wrapper {
 }
 
 /* ============================================================ ANIKAI FEATURES ============================================================ */
+
+/* ── Native Ad Section ─────────────────────────────────── */
+.native-ad-section {
+  padding: 0 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.native-ad-tag {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 0.45rem;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+}
+
+.native-ad-grid-wrap {
+  width: 100%;
+}
+
+/* Force Adsterra native container to match anime-grid */
+#container-b7b05568585173256a38bfef51f1ed41 {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)) !important;
+  gap: 1.1rem !important;
+  margin-bottom: 2rem !important;
+  list-style: none !important;
+  padding: 0 !important;
+}
+
+/* Card base — match .card */
+#container-b7b05568585173256a38bfef51f1ed41 a,
+#container-b7b05568585173256a38bfef51f1ed41>div,
+#container-b7b05568585173256a38bfef51f1ed41>li {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  overflow: hidden !important;
+  text-decoration: none !important;
+  color: var(--text-main) !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease !important;
+  cursor: pointer !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+#container-b7b05568585173256a38bfef51f1ed41 a:hover,
+#container-b7b05568585173256a38bfef51f1ed41>div:hover,
+#container-b7b05568585173256a38bfef51f1ed41>li:hover {
+  transform: translateY(-4px) !important;
+  border-color: rgba(255, 184, 0, 0.35) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Poster image — fill top like anime card poster */
+#container-b7b05568585173256a38bfef51f1ed41 img {
+  width: 100% !important;
+  aspect-ratio: 2/3 !important;
+  object-fit: cover !important;
+  display: block !important;
+  border-radius: 0 !important;
+}
+
+/* Title */
+#container-b7b05568585173256a38bfef51f1ed41 [class*="title"],
+#container-b7b05568585173256a38bfef51f1ed41 h3,
+#container-b7b05568585173256a38bfef51f1ed41 h4,
+#container-b7b05568585173256a38bfef51f1ed41 b,
+#container-b7b05568585173256a38bfef51f1ed41 strong {
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  color: var(--text-main) !important;
+  padding: 0.45rem 0.55rem 0 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  line-height: 1.35 !important;
+}
+
+/* Meta / description */
+#container-b7b05568585173256a38bfef51f1ed41 p,
+#container-b7b05568585173256a38bfef51f1ed41 [class*="desc"],
+#container-b7b05568585173256a38bfef51f1ed41 span {
+  font-size: 0.73rem !important;
+  color: var(--text-muted) !important;
+  padding: 0.2rem 0.55rem 0.55rem !important;
+}
+
+/* CTA button */
+#container-b7b05568585173256a38bfef51f1ed41 button,
+#container-b7b05568585173256a38bfef51f1ed41 [class*="btn"],
+#container-b7b05568585173256a38bfef51f1ed41 [class*="cta"] {
+  background: linear-gradient(140deg, #ffbf00, #ffa200) !important;
+  color: #111 !important;
+  border: none !important;
+  border-radius: 6px !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  padding: 0.3rem 0.6rem !important;
+  margin: 0 0.45rem 0.55rem !important;
+  cursor: pointer !important;
+  align-self: flex-start !important;
+}
