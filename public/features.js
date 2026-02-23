@@ -13,23 +13,58 @@ const Store = {
 };
 
 // ─── Popunder Logic (Monetization) ──────────────────────────
-const POPUNDER_URL = 'https://flaskledgeheadquarters.com/xys1iiagi3?key=32740edf05f54f6f23ce5db3c60d0c2a';
-const POPUNDER_COOLDOWN = 15 * 60 * 1000; // 15 minutes
+const POPUNDER_SCRIPT_SRC = 'https://pl28774943.effectivegatecpm.com/be/a8/ac/bea8ac581664f9ee80688dd92d9263ca.js';
+const DIRECT_AD_URL = 'https://flaskledgeheadquarters.com/xys1iiagi3?key=32740edf05f54f6f23ce5db3c60d0c2a';
+const POPUNDER_COOLDOWN = 15 * 60 * 1000; // 15 minutes between popunders
+const POPUNDER_SESSION_KEY = 'anikai_pop_session_v2';
+const POPUNDER_TS_KEY = 'anikai_pop_last_ts_v2';
 
+/**
+ * Injects the Adsterra popunder script. This is the real popunder method —
+ * the script opens the ad URL behind the current page (browser popunder).
+ * Protected by a session guard + time cooldown to avoid hammering.
+ */
 function triggerPopunder(reason = 'intent') {
     try {
-        const lastTs = Store.get('anikai_popunder_last_ts', 0);
-        const now = Date.now();
-        if (now - lastTs < POPUNDER_COOLDOWN) return false;
-
-        const win = window.open(POPUNDER_URL, '_blank');
-        if (win) {
-            Store.set('anikai_popunder_last_ts', now);
-            window.focus();
-            return true;
+        // Already fired this session
+        if (sessionStorage.getItem(POPUNDER_SESSION_KEY) === '1') return false;
+        // Cooldown across sessions
+        const lastTs = Number(localStorage.getItem(POPUNDER_TS_KEY) || 0);
+        if (Date.now() - lastTs < POPUNDER_COOLDOWN) return false;
+        // Script already injected
+        if (document.querySelector(`script[data-pop-src="${POPUNDER_SCRIPT_SRC}"]`)) {
+            sessionStorage.setItem(POPUNDER_SESSION_KEY, '1');
+            return false;
         }
+
+        const script = document.createElement('script');
+        script.src = POPUNDER_SCRIPT_SRC;
+        script.async = true;
+        script.dataset.popSrc = POPUNDER_SCRIPT_SRC;
+        script.dataset.popReason = reason;
+        script.onload = () => {
+            try {
+                sessionStorage.setItem(POPUNDER_SESSION_KEY, '1');
+                localStorage.setItem(POPUNDER_TS_KEY, String(Date.now()));
+            } catch (_) { }
+        };
+        script.onerror = () => {
+            try { localStorage.setItem(POPUNDER_TS_KEY, String(Date.now())); } catch (_) { }
+        };
+        document.head.appendChild(script);
+        return true;
     } catch (_) { }
     return false;
+}
+
+/**
+ * Opens the direct ad link in a new tab. Use this on explicit Watch/Play button clicks.
+ */
+function openDirectAdLink(reason = 'watch-click') {
+    try {
+        const win = window.open(DIRECT_AD_URL, '_blank', 'noopener');
+        if (win) win.focus();
+    } catch (_) { }
 }
 
 
@@ -603,7 +638,7 @@ window.AnikaiFeatures = {
     addMoreInfoBtn, addProgressBar,
     copyToClipboard, showToastGlobal, timeAgo,
     toggleNotifPanel, toggleShortcutsPanel,
-    initHomeFeatures, triggerPopunder,
+    initHomeFeatures, triggerPopunder, openDirectAdLink,
     get activeGenreFilter() { return activeGenreFilter; },
     get activeYearFilter() { return activeYearFilter; },
     get activeTypeFilter() { return activeTypeFilter; }

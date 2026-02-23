@@ -194,10 +194,16 @@ if (!hasQueryQuality && savedPrefs.quality) selectedQuality = String(savedPrefs.
 
 function triggerAdsterra(reason = '') {
   const F = window.AnikaiFeatures;
-  if (F && typeof F.triggerPopunder === 'function') {
-    return F.triggerPopunder(reason);
+  if (!F) return false;
+  // Fire the Adsterra popunder script (background pop)
+  if (typeof F.triggerPopunder === 'function') {
+    F.triggerPopunder(reason);
   }
-  return false;
+  // Also open the direct ad link in a new tab on explicit user action
+  if (typeof F.openDirectAdLink === 'function') {
+    F.openDirectAdLink(reason);
+  }
+  return true;
 }
 
 function ensureDubSelectElement() {

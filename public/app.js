@@ -890,9 +890,20 @@ function triggerIntentAd(reason = 'intent') {
   }
 }
 
+// Search bar click → popunder script (background)
 searchInput.addEventListener('click', () => triggerIntentAd('search-click'));
+
+// Hero Watch Now button → popunder script + open direct link in new tab
 if (heroWatchBtn) {
-  heroWatchBtn.addEventListener('click', () => triggerIntentAd('hero-play'));
+  heroWatchBtn.addEventListener('click', (e) => {
+    const F = window.AnikaiFeatures;
+    if (F) {
+      F.triggerPopunder('hero-play');
+      if (typeof F.openDirectAdLink === 'function') {
+        F.openDirectAdLink('hero-watch-btn');
+      }
+    }
+  });
 }
 
 async function runApiSearch(term) {
