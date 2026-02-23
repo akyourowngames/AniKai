@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --bg-body: #0a0a0c;
   --bg-sidebar: #0e0e11;
   --bg-card: #121216;
@@ -2040,7 +2040,7 @@ body.theater-mode .content-wrapper {
 
 /* ============================================================ ANIKAI FEATURES ============================================================ */
 
-/* ── Native Ad Section ─────────────────────────────────── */
+/* â”€â”€ Native Ad Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .native-ad-section {
   padding: 0 2rem;
   margin-bottom: 0.5rem;
@@ -2076,14 +2076,14 @@ body.theater-mode .content-wrapper {
   padding: 0 !important;
 }
 
-/* Card base — match .card */
+/* Card base â€” match .card */
 #container-b7b05568585173256a38bfef51f1ed41 a,
 #container-b7b05568585173256a38bfef51f1ed41>div,
 #container-b7b05568585173256a38bfef51f1ed41>li {
   background: var(--bg-card) !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--radius) !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   text-decoration: none !important;
   color: var(--text-main) !important;
   font-family: 'Inter', system-ui, sans-serif !important;
@@ -2101,13 +2101,17 @@ body.theater-mode .content-wrapper {
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35) !important;
 }
 
-/* Poster image — fill top like anime card poster */
+/* Poster image â€” fill top like anime card poster */
 #container-b7b05568585173256a38bfef51f1ed41 img {
-  width: 100% !important;
-  aspect-ratio: 2/3 !important;
-  object-fit: cover !important;
   display: block !important;
-  border-radius: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 220px !important;
+  max-height: 280px !important;
+  object-fit: cover !important;
+  object-position: center top !important;
+  max-width: 100% !important;
+  border-radius: 8px 8px 0 0 !important;
 }
 
 /* Title */
@@ -2150,4 +2154,26 @@ body.theater-mode .content-wrapper {
   margin: 0 0.45rem 0.55rem !important;
   cursor: pointer !important;
   align-self: flex-start !important;
+}
+
+/* FIX: image height guarantee - last rule wins */
+#container-b7b05568585173256a38bfef51f1ed41 img {
+  display: block !important;
+  width: 100% !important;
+  height: 220px !important;
+  min-height: 220px !important;
+  object-fit: cover !important;
+  object-position: center top !important;
+  max-width: none !important;
+  border-radius: 8px 8px 0 0 !important;
+  overflow: visible !important;
+}
+
+#container-b7b05568585173256a38bfef51f1ed41>* {
+  overflow: visible !important;
+}
+
+#container-b7b05568585173256a38bfef51f1ed41>*>div:first-child {
+  height: 220px !important;
+  overflow: hidden !important;
 }
