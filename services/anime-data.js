@@ -1,6 +1,16 @@
-﻿const ANILIST_API_URL = 'https://graphql.anilist.co';
+const { LRUCache } = require('lru-cache');
+
+const ANILIST_API_URL = 'https://graphql.anilist.co';
 const JIKAN_API_URL = 'https://api.jikan.moe/v4';
 const ANILIST_MAX_RETRIES = 6;
+
+// Cache for getAnimeDetails — keyed by `${source}:${animeId}`
+// Max 500 entries, 5-minute TTL. Prevents repeated upstream calls when
+// episode-list and episode-source both fetch the same anime in quick succession.
+const animeDetailsCache = new LRUCache({
+  max: 500,
+  ttl: 5 * 60 * 1000 // 5 minutes
+});
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -141,41 +151,59 @@ async function listAnime({ page = 1, perPage = 18, search = '', source = 'anilis
 }
 
 async function getAnimeDetails(animeId, source = 'anilist', anilistToken = '') {
-  if (source === 'mal') {
-    const data = await jikanRequest(`/anime/${animeId}/full`);
-    if (!data?.data) return null;
-    return {
-      ...toMalCatalogItem(data.data),
-      bannerImage: data.data.images?.jpg?.large_image_url || null
-    };
+  // Use a token-agnostic cache key — token only affects rate limits, not the data shape
+  const cacheKey = `${source}:${animeId}`;
+  const cached = animeDetailsCache.get(cacheKey);
+  if (cached !== undefined) {
+    return cached;
   }
 
-  const query = `
-    query ($id: Int) {
-      Media(id: $id, type: ANIME) {
-        id
-        idMal
-        title { romaji english native }
-        description(asHtml: false)
-        genres
-        episodes
-        status
-        season
-        averageScore
-        startDate { year }
-        coverImage { large extraLarge }
-        bannerImage
-        trailer { id site }
-      }
-    }
-  `;
+  let result = null;
 
-  const data = await anilistRequest(query, { id: animeId }, anilistToken);
-  if (!data?.Media) return null;
-  return {
-    ...toCatalogItem(data.Media),
-    bannerImage: data.Media.bannerImage || null
-  };
+  if (source === 'mal') {
+    const data = await jikanRequest(`/anime/${animeId}/full`);
+    if (data?.data) {
+      result = {
+        ...toMalCatalogItem(data.data),
+        bannerImage: data.data.images?.jpg?.large_image_url || null
+      };
+    }
+  } else {
+    const query = `
+      query ($id: Int) {
+        Media(id: $id, type: ANIME) {
+          id
+          idMal
+          title { romaji english native }
+          description(asHtml: false)
+          genres
+          episodes
+          status
+          season
+          averageScore
+          startDate { year }
+          coverImage { large extraLarge }
+          bannerImage
+          trailer { id site }
+        }
+      }
+    `;
+
+    const data = await anilistRequest(query, { id: animeId }, anilistToken);
+    if (data?.Media) {
+      result = {
+        ...toCatalogItem(data.Media),
+        bannerImage: data.Media.bannerImage || null
+      };
+    }
+  }
+
+  // Only cache successful (non-null) results — don't cache 404s
+  if (result !== null) {
+    animeDetailsCache.set(cacheKey, result);
+  }
+
+  return result;
 }
 
 module.exports = {

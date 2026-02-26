@@ -691,6 +691,41 @@ async function applyAuthUser(user, options = {}) {
   renderJourney();
 }
 
+async function fetchMissingAnimeMeta() {
+  // Find progress entries that have no stored meta and fetch them individually (fast)
+  const latestByAnime = getLatestProgressByAnime();
+  const metaStore = getAnimeMetaStore();
+  const missingIds = Array.from(latestByAnime.keys()).filter((id) => !metaStore[String(id)] && !catalog.find((c) => String(c.id) === String(id)));
+  if (!missingIds.length) return;
+
+  await Promise.allSettled(missingIds.map(async (id) => {
+    try {
+      const res = await fetch(`/api/anime/${id}?source=${source}`);
+      if (!res.ok) return;
+      const anime = await res.json();
+      if (!anime || !anime.id) return;
+      // Save to the meta store
+      try {
+        const store = JSON.parse(localStorage.getItem(ANIME_META_STORE_KEY) || '{}');
+        store[String(anime.id)] = {
+          id: anime.id,
+          title: String(anime.title || ''),
+          poster: String(anime.poster || ''),
+          year: anime.year || 'N/A',
+          type: anime.type || 'TV',
+          genres: Array.isArray(anime.genres) ? anime.genres : []
+        };
+        localStorage.setItem(ANIME_META_STORE_KEY, JSON.stringify(store));
+      } catch (_) {}
+    } catch (_) {}
+  }));
+
+  // Re-render after fetching missing meta
+  renderProfile();
+  renderPlaylist();
+  renderJourney();
+}
+
 async function init() {
   const cachedCatalog = readAccountCatalogCache();
   if (Array.isArray(cachedCatalog) && cachedCatalog.length) {
@@ -712,20 +747,17 @@ async function init() {
     await applyAuthUser(currentUser, { keepExistingOnNull: true });
   }
 
+  // Fetch missing anime meta individually (fast, parallel) — no need to wait for /api/anime/all
+  fetchMissingAnimeMeta();
+
+  // Refresh catalog in background for search — but don't block anything on it
   fetch(`/api/anime/all?source=${source}`)
     .then((catalogRes) => catalogRes.json().catch(() => []))
     .then((payload) => {
       catalog = Array.isArray(payload) ? payload : [];
       writeAccountCatalogCache(catalog);
-      renderProfile();
-      renderPlaylist();
-      renderJourney();
     })
-    .catch(() => {
-      if (!catalog.length) {
-        catalog = [];
-      }
-    });
+    .catch(() => {});
 }
 
 init();
