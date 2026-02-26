@@ -1384,6 +1384,7 @@ async function init() {
       throw new Error('Anime payload was empty');
     }
     renderAnimeDetails(anime);
+    saveAnimeMeta(anime);
     safeWriteJsonStorage(animeCacheKey, { ts: Date.now(), data: anime }, window.sessionStorage);
 
     // Fetch providers (with robust fallback so UI stays usable).
@@ -1694,6 +1695,24 @@ function watchForVideoEnd() {
 }
 
 // ── Watch Position Save / Restore ──────────────────────
+const ANIME_META_STORE_KEY = 'anikai_anime_meta_store';
+
+function saveAnimeMeta(anime) {
+  if (!anime || !anime.id) return;
+  try {
+    const store = JSON.parse(localStorage.getItem(ANIME_META_STORE_KEY) || '{}');
+    store[String(anime.id)] = {
+      id: anime.id,
+      title: String(anime.title || ''),
+      poster: String(anime.poster || ''),
+      year: anime.year || 'N/A',
+      type: anime.type || 'TV',
+      genres: Array.isArray(anime.genres) ? anime.genres : []
+    };
+    localStorage.setItem(ANIME_META_STORE_KEY, JSON.stringify(store));
+  } catch (_) {}
+}
+
 function saveWatchPosition() {
   const v = getPlayerEl();
   const F = window.AnikaiFeatures;

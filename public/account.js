@@ -42,6 +42,7 @@ const WATCH_PROGRESS_KEY = 'anikai_watch_positions';
 const RECENT_SEARCHES_KEY = 'anikai_recent_searches';
 const ACCOUNT_CATALOG_CACHE_KEY_PREFIX = 'anikai_account_catalog_cache_';
 const ACCOUNT_CATALOG_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const ANIME_META_STORE_KEY = 'anikai_anime_meta_store';
 const firebaseClient = window.AnikaiFirebase || null;
 
 const sharedStorage = window.AnikaiShared || {};
@@ -346,6 +347,43 @@ async function loadWatchListForCurrentUser() {
   }
 }
 
+function getAnimeMetaStore() {
+  try {
+    return JSON.parse(localStorage.getItem(ANIME_META_STORE_KEY) || '{}');
+  } catch (_) {
+    return {};
+  }
+}
+
+function getAnimeFromMetaOrCatalog(animeId) {
+  const fromCatalog = catalog.find((item) => String(item.id) === String(animeId));
+  if (fromCatalog) return fromCatalog;
+  const store = getAnimeMetaStore();
+  return store[String(animeId)] || null;
+}
+
+function removeJourneyEntry(animeId) {
+  // Remove from local progress store (keys are like "animeId_episode")
+  const allProgress = readJson(WATCH_PROGRESS_KEY, {});
+  const keysToDelete = Object.keys(allProgress).filter((k) => k.startsWith(`${animeId}_`) || k === String(animeId));
+  keysToDelete.forEach((k) => delete allProgress[k]);
+  writeJson(WATCH_PROGRESS_KEY, allProgress);
+
+  // Remove from in-memory cloud progress map
+  cloudProgressByAnime.delete(String(animeId));
+
+  // Delete from Firebase cloud if logged in
+  if (firebaseClient?.ready && firebaseClient.firestoreEnabled && currentUser?.uid && typeof firebaseClient.deleteWatchProgressEntry === 'function') {
+    firebaseClient.deleteWatchProgressEntry(currentUser.uid, animeId).catch((err) => {
+      console.error('Failed to delete cloud progress entry', err);
+    });
+  }
+
+  renderJourney();
+  renderProfile();
+  showToast('Removed from watch journey', 'info');
+}
+
 function getLocalLatestProgressByAnime() {
   const allProgress = readJson(WATCH_PROGRESS_KEY, {});
   const latestByAnime = new Map();
@@ -411,13 +449,14 @@ function formatAgo(ts) {
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
-function getJourneyEntries(limit = 20) {
+function getJourneyEntries(limit = 0) {
   const latestByAnime = getLatestProgressByAnime();
-  return Array.from(latestByAnime.entries())
-    .sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0))
-    .slice(0, limit)
+  const sorted = Array.from(latestByAnime.entries())
+    .sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
+  const sliced = limit > 0 ? sorted.slice(0, limit) : sorted;
+  return sliced
     .map(([animeId, progress]) => {
-      const anime = catalog.find((item) => String(item.id) === String(animeId));
+      const anime = getAnimeFromMetaOrCatalog(animeId);
       if (!anime) return null;
       return { anime, progress };
     })
@@ -425,7 +464,7 @@ function getJourneyEntries(limit = 20) {
 }
 
 function renderProfile() {
-  const entries = getJourneyEntries(200);
+  const entries = getJourneyEntries();
   const watchedMinutes = Math.round(entries.reduce((sum, item) => sum + ((item.progress?.currentTime || 0) / 60), 0));
   const genreCounts = new Map();
   entries.forEach(({ anime }) => {
@@ -469,24 +508,38 @@ function renderPlaylist() {
 }
 
 function renderJourney() {
-  const entries = getJourneyEntries(20);
+  const entries = getJourneyEntries();
   if (!entries.length) {
-    accountJourneyList.innerHTML = '<div class="account-empty">No watch activity yet.</div>';
+    accountJourneyList.innerHTML = '<div class="account-empty">No watch activity yet. Start watching anime to see your journey here!</div>';
     return;
   }
   accountJourneyList.innerHTML = entries.map(({ anime, progress }) => {
     const pct = Math.max(0, Math.min(100, Math.round((progress.pct || 0) * 100)));
+    const safeTitle = String(anime.title || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     return `
-      <a class="journey-item" href="/watch.html?id=${anime.id}&episode=${progress.episode || 1}&source=${source}">
-        <img class="journey-poster" src="${anime.poster || ''}" alt="${anime.title}" loading="lazy" />
-        <div class="journey-info">
-          <div class="journey-title">${anime.title}</div>
-          <div class="journey-meta">Episode ${progress.episode || 1} • ${pct}% watched • ${formatAgo(progress.ts)}</div>
-          <div class="journey-progress"><span style="width:${pct}%"></span></div>
-        </div>
-      </a>
+      <div class="journey-item-wrapper">
+        <a class="journey-item" href="/watch.html?id=${anime.id}&episode=${progress.episode || 1}&source=${source}">
+          <img class="journey-poster" src="${anime.poster || ''}" alt="${safeTitle}" loading="lazy" />
+          <div class="journey-info">
+            <div class="journey-title">${safeTitle}</div>
+            <div class="journey-meta">Episode ${progress.episode || 1} • ${pct}% watched • ${formatAgo(progress.ts)}</div>
+            <div class="journey-progress"><span style="width:${pct}%"></span></div>
+          </div>
+        </a>
+        <button class="journey-remove-btn" title="Remove from journey" data-anime-id="${anime.id}" type="button">✕</button>
+      </div>
     `;
   }).join('');
+
+  // Attach remove button listeners
+  accountJourneyList.querySelectorAll('.journey-remove-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = btn.dataset.animeId;
+      if (id) removeJourneyEntry(id);
+    });
+  });
 }
 
 if (exportPlaylistBtn) {

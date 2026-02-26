@@ -195,6 +195,11 @@
     await batch.commit();
   }
 
+  async function deleteWatchProgressEntry(uid, animeId) {
+    if (!db || !uid || !animeId) return;
+    await progressCollection(uid).doc(String(animeId)).delete();
+  }
+
   async function addComment(animeId, episode, payload) {
     if (!db || !animeId || !episode) {
       throw new Error('Comments are unavailable right now.');
@@ -261,6 +266,7 @@
     loadWatchProgress,
     saveWatchProgress,
     clearWatchProgress,
+    deleteWatchProgressEntry,
     addComment,
     subscribeComments
   };
