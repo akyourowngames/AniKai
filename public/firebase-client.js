@@ -117,6 +117,38 @@
     return db.collection('userProgress').doc(String(uid)).collection('entries');
   }
 
+  const COMMENT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+  function commentsCollection(animeId, episode) {
+    if (!db) return null;
+    return db
+      .collection('episodeComments')
+      .doc(String(animeId))
+      .collection('episodes')
+      .doc(String(episode))
+      .collection('items');
+  }
+
+  async function pruneOldComments(animeId, episode, maxAgeMs) {
+    if (!db || !animeId || !episode) return;
+    const col = commentsCollection(animeId, episode);
+    if (!col) return;
+    const cutoff = Date.now() - (maxAgeMs || COMMENT_MAX_AGE_MS);
+    try {
+      const snap = await col
+        .where('createdAtMs', '<', cutoff)
+        .orderBy('createdAtMs', 'asc')
+        .limit(80)
+        .get();
+      if (snap.empty) return;
+      const batch = db.batch();
+      snap.docs.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+    } catch (_) {
+      // Best-effort cleanup; ignore failures so comments still work.
+    }
+  }
+
   async function loadPlaylist(uid) {
     if (!db || !uid) return [];
     const snap = await playlistDoc(uid).get();
@@ -163,6 +195,58 @@
     await batch.commit();
   }
 
+  async function addComment(animeId, episode, payload) {
+    if (!db || !animeId || !episode) {
+      throw new Error('Comments are unavailable right now.');
+    }
+    const col = commentsCollection(animeId, episode);
+    if (!col) {
+      throw new Error('Comments are unavailable right now.');
+    }
+    const now = Date.now();
+    // Prune comments older than 24 hours for this episode.
+    pruneOldComments(animeId, episode, COMMENT_MAX_AGE_MS);
+    const docRef = await col.add({
+      uid: payload?.uid || null,
+      displayName: String(payload?.displayName || 'User'),
+      text: String(payload?.text || '').slice(0, 1000),
+      createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+      createdAtMs: now
+    });
+    const snap = await docRef.get();
+    return { id: docRef.id, ...(snap.data() || {}) };
+  }
+
+  function subscribeComments(animeId, episode, cb, limit = 80) {
+    if (!db || !animeId || !episode) {
+      cb([]);
+      return noop;
+    }
+    const col = commentsCollection(animeId, episode);
+    if (!col) {
+      cb([]);
+      return noop;
+    }
+    const cutoff = Date.now() - COMMENT_MAX_AGE_MS;
+    return col
+      .where('createdAtMs', '>=', cutoff)
+      .orderBy('createdAtMs', 'desc')
+      .limit(limit)
+      .onSnapshot(
+        (querySnapshot) => {
+          const items = [];
+          querySnapshot.forEach((doc) => {
+            items.push({ id: doc.id, ...(doc.data() || {}) });
+          });
+          items.sort((a, b) => (a.createdAtMs || 0) - (b.createdAtMs || 0));
+          cb(items);
+        },
+        () => {
+          cb([]);
+        }
+      );
+  }
+
   window.AnikaiFirebase = {
     ready: true,
     authEnabled: Boolean(auth),
@@ -176,6 +260,8 @@
     savePlaylist,
     loadWatchProgress,
     saveWatchProgress,
-    clearWatchProgress
+    clearWatchProgress,
+    addComment,
+    subscribeComments
   };
 })();

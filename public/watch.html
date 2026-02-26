@@ -16,11 +16,13 @@
   <link rel="stylesheet" href="/vendor/plyr/plyr.css" />
   <link rel="stylesheet" href="styles.css?v=20260221-3" />
   <link rel="stylesheet" href="features.css" />
+  <link rel="stylesheet" href="accessibility.css" />
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script src="/vendor/plyr/plyr.polyfilled.min.js"></script>
 </head>
 
 <body class="watch-page">
+  <a href="#mainContent" class="skip-link">Skip to main content</a>
   <!-- Sidebar -->
   <aside id="sidebar" class="sidebar">
     <div class="logo-area">
@@ -34,7 +36,7 @@
     <div class="sidebar-scroll">
       <div class="sidebar-section">
         <h3>Menu</h3>
-        <nav class="sidebar-nav">
+        <nav class="sidebar-nav" aria-label="Main navigation">
           <a href="/" class="nav-link">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -106,13 +108,13 @@
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input id="searchInput" type="text" placeholder="Quick search..." autocomplete="off" />
+          <input id="searchInput" type="text" placeholder="Search anime..." autocomplete="off" />
         </div>
         <div id="searchResults" class="search-results"></div>
       </div>
     </header>
 
-    <main class="watch-container">
+    <main id="mainContent" class="watch-container">
       <div class="watch-grid">
         <div class="player-column">
           <!-- Video Player -->
@@ -156,6 +158,32 @@
                 <!-- Pills will be rendered here -->
               </div>
               <p id="animeDesc" class="info-desc"></p>
+            </div>
+          </section>
+
+          <!-- Comments -->
+          <section id="commentsSection" class="comments-section">
+            <div class="section-header">
+              <div class="section-title">Comments</div>
+              <div id="commentMeta" class="comments-meta-small">
+                <span id="commentCount">0 Comments</span>
+                <span class="comment-window-label">Last 24 hours</span>
+              </div>
+            </div>
+            <div id="commentAuthHint" class="comment-auth-hint">
+              Sign in on the home page to post comments that sync across your devices.
+            </div>
+            <form id="commentForm" class="comment-form">
+              <textarea id="commentInput" rows="3" placeholder="Share your thoughts about this episode..." maxlength="600"></textarea>
+              <div class="comment-form-row">
+                <button id="commentSubmitBtn" type="submit" class="btn-action comment-submit-btn">
+                  Post Comment
+                </button>
+                <span id="commentFormStatus" class="comment-status-text"></span>
+              </div>
+            </form>
+            <div id="commentList" class="comment-list">
+              <div class="comment-empty">No comments yet. Be the first to talk about this episode.</div>
             </div>
           </section>
         </div>
@@ -207,6 +235,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-analytics-compat.js"></script>
   <script src="firebase-client.js"></script>
   <script src="features.js"></script>
+  <script src="shared-storage.js"></script>
   <script src="watch.js?v=20260222-3"></script>
 </body>
 

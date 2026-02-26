@@ -15,6 +15,16 @@ const ANILIST_TOKEN_URL = 'https://anilist.co/api/v2/oauth/token';
 const ALL_ANIME_CACHE_TTL_MS = 10 * 60 * 1000;
 const allAnimeCache = new Map();
 
+const PRIVATE_HOST_PATTERNS = [
+  /^localhost$/i,
+  /^127\./,
+  /^10\./,
+  /^192\.168\./,
+  /^172\.(1[6-9]|2\d|3[0-1])\./,
+  /^0\.0\.0\.0$/,
+  /^\[::1\]$/
+];
+
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -79,6 +89,11 @@ async function fetchWithHeaderPreservingRedirects(url, headers, maxRedirects = 5
   }
 
   throw new Error('Too many upstream redirects');
+}
+
+function isPrivateHostname(hostname) {
+  const value = String(hostname || '').toLowerCase();
+  return PRIVATE_HOST_PATTERNS.some((re) => re.test(value));
 }
 
 app.use(cors());
@@ -360,6 +375,10 @@ app.get('/api/subtitles/file', async (req, res) => {
   }
   if (!['http:', 'https:'].includes(target.protocol)) {
     return res.status(400).send('Unsupported URL protocol');
+  }
+
+  if (isPrivateHostname(target.hostname)) {
+    return res.status(400).send('Subtitle host not allowed');
   }
 
   try {
@@ -704,6 +723,10 @@ app.get('/api/onlinestream/proxy', async (req, res) => {
 
   if (!['http:', 'https:'].includes(target.protocol)) {
     return res.status(400).json({ error: 'Unsupported protocol' });
+  }
+
+  if (isPrivateHostname(target.hostname)) {
+    return res.status(400).json({ error: 'Upstream host not allowed' });
   }
 
   const requestHeaders = {

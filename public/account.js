@@ -44,28 +44,32 @@ const ACCOUNT_CATALOG_CACHE_KEY_PREFIX = 'anikai_account_catalog_cache_';
 const ACCOUNT_CATALOG_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 const firebaseClient = window.AnikaiFirebase || null;
 
-let currentUser = readJson(USER_SESSION_KEY, null);
-let watchList = [];
-let cloudProgressByAnime = new Map();
-let catalog = [];
-let searchAbortController = null;
+const sharedStorage = window.AnikaiShared || {};
 
-function readJson(key, fallback) {
+const readJson = sharedStorage.readJson || function readJsonFallback(key, fallback) {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = window.localStorage.getItem(key);
     if (!raw) return fallback;
     const parsed = JSON.parse(raw);
     return parsed ?? fallback;
   } catch (_) {
     return fallback;
   }
-}
+};
 
-function writeJson(key, value) {
+const writeJson = sharedStorage.writeJson || function writeJsonFallback(key, value) {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch (_) { }
-}
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch (_) {
+    // Ignore quota / private mode errors.
+  }
+};
+
+let currentUser = readJson(USER_SESSION_KEY, null);
+let watchList = [];
+let cloudProgressByAnime = new Map();
+let catalog = [];
+let searchAbortController = null;
 
 function getAccountCatalogCacheKey() {
   return `${ACCOUNT_CATALOG_CACHE_KEY_PREFIX}${source}`;
@@ -423,15 +427,26 @@ function getJourneyEntries(limit = 20) {
 function renderProfile() {
   const entries = getJourneyEntries(200);
   const watchedMinutes = Math.round(entries.reduce((sum, item) => sum + ((item.progress?.currentTime || 0) / 60), 0));
+  const genreCounts = new Map();
+  entries.forEach(({ anime }) => {
+    (anime.genres || []).forEach((genre) => {
+      const key = String(genre || '').trim();
+      if (!key) return;
+      genreCounts.set(key, (genreCounts.get(key) || 0) + 1);
+    });
+  });
+  const topGenre = Array.from(genreCounts.entries())
+    .sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
   const profileLines = [
     `User: ${currentUser?.displayName || 'Guest'}`,
     `Email: ${currentUser?.email || 'Not connected'}`,
-    `Auth: ${currentUser?.provider || 'local'}`
+    `Auth: ${currentUser?.provider || 'local'}`,
+    `Top genre: ${topGenre}`
   ];
   const statsLines = [
     `Saved playlist: ${watchList.length} titles`,
     `Journey entries: ${entries.length}`,
-    `Watch time: ${watchedMinutes} min`
+    `Approx. watch time: ${watchedMinutes} min`
   ];
   accountProfile.innerHTML = profileLines.map((line) => `<div>${line}</div>`).join('');
   accountStats.innerHTML = statsLines.map((line) => `<div>${line}</div>`).join('');

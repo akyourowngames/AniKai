@@ -15,9 +15,11 @@
     rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="features.css" />
+  <link rel="stylesheet" href="accessibility.css" />
 </head>
 
 <body class="account-page">
+  <a href="#mainContent" class="skip-link">Skip to main content</a>
   <aside id="sidebar" class="sidebar">
     <div class="logo-area">
       <a href="/" class="logo">
@@ -31,7 +33,7 @@
     <div class="sidebar-scroll">
       <div class="sidebar-section">
         <h3>Menu</h3>
-        <nav class="sidebar-nav">
+        <nav class="sidebar-nav" aria-label="Main navigation">
           <a href="/" class="nav-link">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -102,7 +104,7 @@
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input id="searchInput" type="text" placeholder="Quick search anime..." autocomplete="off" />
+          <input id="searchInput" type="text" placeholder="Search anime..." autocomplete="off" />
         </div>
         <div id="searchResults" class="search-results"></div>
       </div>
@@ -114,7 +116,7 @@
       </div>
     </header>
 
-    <main class="account-container">
+    <main id="mainContent" class="account-container">
       <section class="account-hero">
         <h1>My Account</h1>
         <p>Manage profile, sync state, and track your anime journey.</p>
@@ -152,7 +154,7 @@
 
       <section>
         <div class="section-header">
-          <div class="section-title">Recent Activity</div>
+          <div class="section-title">Watch Journey</div>
         </div>
         <div id="accountJourneyList" class="journey-list"></div>
       </section>
@@ -216,6 +218,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-analytics-compat.js"></script>
   <script src="firebase-client.js"></script>
+  <script src="shared-storage.js"></script>
   <script src="account.js?v=20260222-2"></script>
 </body>
 

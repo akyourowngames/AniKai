@@ -24,9 +24,11 @@
       rel="stylesheet" />
   </noscript>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="accessibility.css" />
 </head>
 
 <body class="home-page">
+  <a href="#mainContent" class="skip-link">Skip to main content</a>
   <h1 class="sr-only">Anikai Anime Streaming Home</h1>
   <!-- Sidebar -->
   <aside id="sidebar" class="sidebar">
@@ -42,7 +44,7 @@
     <div class="sidebar-scroll">
       <div class="sidebar-section">
         <div class="sidebar-heading">Menu</div>
-        <nav class="sidebar-nav">
+        <nav class="sidebar-nav" aria-label="Main navigation">
           <a href="/" class="nav-link active">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -162,7 +164,7 @@
 
     <!-- Main Layout -->
     <div class="main-layout">
-      <main class="primary-content">
+      <main id="mainContent" class="primary-content">
         <!-- Latest Updates -->
         <section id="latest">
           <div class="section-header">
@@ -215,6 +217,14 @@
             <div class="section-title">Watch Journey</div>
           </div>
           <div id="journeyList" class="journey-list"></div>
+        </section>
+
+        <!-- Recommended For You -->
+        <section id="recommendedSection" style="display: none;">
+          <div class="section-header">
+            <div class="section-title">Recommended For You</div>
+          </div>
+          <div id="recommendedGrid" class="anime-grid"></div>
         </section>
       </main>
 
@@ -355,6 +365,7 @@
     </div>
   </div>
 
+  <script src="shared-storage.js"></script>
   <script defer src="app.js"></script>
 </body>
 

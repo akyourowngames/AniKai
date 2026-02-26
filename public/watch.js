@@ -13,6 +13,7 @@ const metaEl = document.querySelector('#animeMeta');
 const descEl = document.querySelector('#animeDesc');
 const posterEl = document.querySelector('#animePoster');
 const playerHostEl = document.querySelector('#playerHost');
+const playerColumnEl = document.querySelector('.player-column');
 const providerSelectEl = document.querySelector('#providerSelect');
 const seaProviderSelectEl = document.querySelector('#seaProviderSelect');
 let dubSelectEl = document.querySelector('#dubSelect');
@@ -25,6 +26,15 @@ const nextEpBtn = document.querySelector('#nextEpBtn');
 const prevEpBtn = document.querySelector('#prevEpBtn');
 const theaterBtn = document.querySelector('#theaterBtn');
 const sidebarToggle = document.querySelector('#sidebarToggle');
+const episodesAsideEl = document.querySelector('.ep-sidebar-premium');
+const commentsSectionEl = document.querySelector('#commentsSection');
+const commentFormEl = document.querySelector('#commentForm');
+const commentInputEl = document.querySelector('#commentInput');
+const commentListEl = document.querySelector('#commentList');
+const commentAuthHintEl = document.querySelector('#commentAuthHint');
+const commentFormStatusEl = document.querySelector('#commentFormStatus');
+const commentSubmitBtnEl = document.querySelector('#commentSubmitBtn');
+const commentCountEl = document.querySelector('#commentCount');
 
 // Search refs
 const searchInput = document.querySelector('#searchInput');
@@ -35,6 +45,8 @@ const PLAYER_PREFS_KEY = 'anikai_player_prefs';
 const RECENT_SEARCHES_KEY = 'anikai_recent_searches';
 const WATCH_ANIME_CACHE_PREFIX = 'anikai_watch_anime_v1';
 const WATCH_EPISODES_CACHE_PREFIX = 'anikai_watch_episodes_v1';
+const COMMENT_CACHE_KEY_PREFIX = 'anikai_comment_cache_v1';
+const COMMENT_CACHE_TTL_MS = 1000 * 60 * 5; // 5m
 const WATCH_ANIME_CACHE_TTL_MS = 1000 * 60 * 60 * 12; // 12h
 const WATCH_EPISODES_CACHE_TTL_MS = 1000 * 60 * 15; // 15m
 const ADSTERRA_SCRIPT_SRC = 'https://pl28774943.effectivegatecpm.com/be/a8/ac/bea8ac581664f9ee80688dd92d9263ca.js';
@@ -73,6 +85,14 @@ const defaultProviderOptions = [
   { id: 'consumet', name: 'Consumet' }
 ];
 
+let commentUser = null;
+let commentsUnsubscribe = null;
+let currentComments = [];
+const episodesOriginalParent = episodesAsideEl?.parentElement || null;
+const episodesOriginalNextSibling = episodesAsideEl?.nextSibling || null;
+
+const sharedStorage = window.AnikaiShared || {};
+
 function readPlayerPrefs() {
   try {
     const raw = localStorage.getItem(PLAYER_PREFS_KEY);
@@ -89,6 +109,9 @@ function savePlayerPrefs(next) {
 }
 
 function safeReadJsonStorage(key, storage = window.sessionStorage) {
+  if (sharedStorage.safeReadJsonStorage) {
+    return sharedStorage.safeReadJsonStorage(key, storage);
+  }
   try {
     const raw = storage.getItem(key);
     return raw ? JSON.parse(raw) : null;
@@ -98,6 +121,10 @@ function safeReadJsonStorage(key, storage = window.sessionStorage) {
 }
 
 function safeWriteJsonStorage(key, value, storage = window.sessionStorage) {
+  if (sharedStorage.safeWriteJsonStorage) {
+    sharedStorage.safeWriteJsonStorage(key, value, storage);
+    return;
+  }
   try {
     storage.setItem(key, JSON.stringify(value));
   } catch (_) {
@@ -123,6 +150,25 @@ function buildEpisodesCacheKey() {
 function isFreshCache(entry, ttlMs) {
   if (!entry || typeof entry.ts !== 'number') return false;
   return Date.now() - entry.ts < ttlMs;
+}
+
+function buildCommentCacheKey(animeIdValue, episodeValue) {
+  return `${COMMENT_CACHE_KEY_PREFIX}:${source}:${animeIdValue || 'unknown'}:${episodeValue || 0}`;
+}
+
+function readCommentCache(animeIdValue, episodeValue) {
+  const entry = safeReadJsonStorage(buildCommentCacheKey(animeIdValue, episodeValue), window.sessionStorage);
+  if (!isFreshCache(entry, COMMENT_CACHE_TTL_MS)) return null;
+  return Array.isArray(entry.items) ? entry.items : null;
+}
+
+function writeCommentCache(animeIdValue, episodeValue, items) {
+  if (!Array.isArray(items)) return;
+  safeWriteJsonStorage(
+    buildCommentCacheKey(animeIdValue, episodeValue),
+    { ts: Date.now(), items },
+    window.sessionStorage
+  );
 }
 
 function normalizeAnime(anime) {
@@ -154,6 +200,212 @@ function renderAnimeDetails(anime) {
       <div class="pill">${anime.type || 'TV'}</div>
       ${topGenres.map((g) => `<div class="pill">${g}</div>`).join('')}
     `;
+}
+
+function getCommentDisplayName(user) {
+  if (!user) return 'Guest';
+  if (user.displayName) return user.displayName;
+  if (user.email && user.email.includes('@')) return user.email.split('@')[0];
+  return 'User';
+}
+
+function formatCommentTime(ts) {
+  const value = Number(ts || 0);
+  if (!value) return '';
+  const diff = Math.max(0, Math.floor((Date.now() - value) / 1000));
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
+function updateCommentAuthUi() {
+  if (!commentsSectionEl || !commentInputEl || !commentSubmitBtnEl) return;
+  const hasFirestore = Boolean(firebaseClient?.ready && firebaseClient.firestoreEnabled);
+  if (!hasFirestore) {
+    commentsSectionEl.style.opacity = '0.6';
+    if (commentAuthHintEl) {
+      commentAuthHintEl.textContent = 'Comments are temporarily unavailable. Firebase is not configured for this session.';
+    }
+    commentInputEl.disabled = true;
+    commentSubmitBtnEl.disabled = true;
+    return;
+  }
+
+  commentsSectionEl.style.opacity = '1';
+  const isAuthed = Boolean(firebaseClient?.getCurrentUser?.());
+  commentInputEl.disabled = !isAuthed;
+  commentSubmitBtnEl.disabled = !isAuthed;
+
+  if (commentAuthHintEl) {
+    if (isAuthed) {
+      const name = getCommentDisplayName(firebaseClient.getCurrentUser());
+      commentAuthHintEl.textContent = `You are commenting as ${name}.`;
+    } else {
+      commentAuthHintEl.textContent = 'Log in on the home or account page to post comments.';
+    }
+  }
+}
+
+function renderComments(items) {
+  if (!commentListEl) return;
+  currentComments = Array.isArray(items) ? items.slice() : [];
+  if (!Array.isArray(items) || !items.length) {
+    commentListEl.innerHTML = '<div class="comment-empty">No comments yet. Be the first to talk about this episode.</div>';
+    if (commentCountEl) commentCountEl.textContent = '0 Comments';
+    return;
+  }
+
+  const html = items.map((item) => {
+    const name = String(item.displayName || 'User');
+    const initial = name.trim().charAt(0).toUpperCase() || 'A';
+    const timeLabel = formatCommentTime(item.createdAtMs);
+    const safeText = String(item.text || '');
+    return `
+      <div class="comment-item">
+        <div class="comment-avatar">${initial}</div>
+        <div>
+          <div class="comment-header">
+            <span class="comment-author">${name}</span>
+            <span class="comment-meta">${timeLabel}</span>
+          </div>
+          <div class="comment-body">${safeText.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  commentListEl.innerHTML = html;
+  if (commentCountEl) {
+    const count = items.length;
+    commentCountEl.textContent = `${count} Comment${count === 1 ? '' : 's'}`;
+  }
+}
+
+function subscribeCommentsForEpisode(episodeNumber) {
+  if (!commentsSectionEl || !firebaseClient?.subscribeComments || !animeId) return;
+  if (commentsUnsubscribe) {
+    commentsUnsubscribe();
+    commentsUnsubscribe = null;
+  }
+  const cached = readCommentCache(animeId, episodeNumber);
+  if (cached) {
+    renderComments(cached);
+  } else {
+    renderComments([]);
+  }
+  // #region agent log
+  fetch('http://127.0.0.1:7266/ingest/4f728ec4-050e-4223-9dee-e100cb8b6f4b', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Debug-Session-Id': '65dcf7'
+    },
+    body: JSON.stringify({
+      sessionId: '65dcf7',
+      runId: 'pre-fix-1',
+      hypothesisId: 'H1',
+      location: 'watch.js:252',
+      message: 'subscribeCommentsForEpisode start',
+      data: {
+        animeId,
+        episodeNumber,
+        hadCache: Boolean(cached),
+        cacheCount: cached ? cached.length : 0
+      },
+      timestamp: Date.now()
+    })
+  }).catch(() => { });
+  // #endregion agent log
+  commentsUnsubscribe = firebaseClient.subscribeComments(
+    animeId,
+    episodeNumber,
+    (items) => {
+      const safeItems = Array.isArray(items) ? items : [];
+      writeCommentCache(animeId, episodeNumber, safeItems);
+      renderComments(safeItems);
+      // #region agent log
+      fetch('http://127.0.0.1:7266/ingest/4f728ec4-050e-4223-9dee-e100cb8b6f4b', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Debug-Session-Id': '65dcf7'
+        },
+        body: JSON.stringify({
+          sessionId: '65dcf7',
+          runId: 'pre-fix-1',
+          hypothesisId: 'H1',
+          location: 'watch.js:265',
+          message: 'subscribeCommentsForEpisode snapshot',
+          data: {
+            animeId,
+            episodeNumber,
+            count: safeItems.length
+          },
+          timestamp: Date.now()
+        })
+      }).catch(() => { });
+      // #endregion agent log
+    }
+  );
+}
+
+function syncEpisodeLayoutMode() {
+  if (!episodesAsideEl || !playerColumnEl || !episodesOriginalParent) return;
+  const isMobile = window.innerWidth <= 820;
+  if (isMobile) {
+    if (!episodesAsideEl.classList.contains('is-mobile-inline')) {
+      episodesAsideEl.classList.add('is-mobile-inline');
+      playerColumnEl.insertBefore(episodesAsideEl, commentsSectionEl || null);
+      // #region agent log
+      fetch('http://127.0.0.1:7266/ingest/4f728ec4-050e-4223-9dee-e100cb8b6f4b', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Debug-Session-Id': '65dcf7'
+        },
+        body: JSON.stringify({
+          sessionId: '65dcf7',
+          runId: 'pre-fix-1',
+          hypothesisId: 'H2',
+          location: 'watch.js:285',
+          message: 'syncEpisodeLayoutMode -> mobile',
+          data: {
+            width: window.innerWidth
+          },
+          timestamp: Date.now()
+        })
+      }).catch(() => { });
+      // #endregion agent log
+    }
+  } else if (episodesAsideEl.classList.contains('is-mobile-inline')) {
+    episodesAsideEl.classList.remove('is-mobile-inline');
+    if (episodesOriginalNextSibling && episodesOriginalNextSibling.parentNode === episodesOriginalParent) {
+      episodesOriginalParent.insertBefore(episodesAsideEl, episodesOriginalNextSibling);
+    } else {
+      episodesOriginalParent.appendChild(episodesAsideEl);
+    }
+    // #region agent log
+    fetch('http://127.0.0.1:7266/ingest/4f728ec4-050e-4223-9dee-e100cb8b6f4b', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Debug-Session-Id': '65dcf7'
+      },
+      body: JSON.stringify({
+        sessionId: '65dcf7',
+        runId: 'pre-fix-1',
+        hypothesisId: 'H2',
+        location: 'watch.js:300',
+        message: 'syncEpisodeLayoutMode -> desktop',
+        data: {
+          width: window.innerWidth
+        },
+        timestamp: Date.now()
+      })
+    }).catch(() => { });
+    // #endregion agent log
+  }
 }
 
 function getSearchUserKey() {
@@ -678,7 +930,10 @@ function playSelectedSource(sourceItem) {
     showToast(hint, 'error');
   }, { once: true });
 
-  if (sourceItem.type === 'm3u8' || /\.m3u8($|\?)/i.test(sourceItem.url)) {
+  const originalUrl = String(sourceItem.url || '').trim();
+  const isM3u8Type = sourceItem.type === 'm3u8' || /\.m3u8($|\?)/i.test(originalUrl);
+
+  if (isM3u8Type) {
     if (window.Hls && Hls.isSupported()) {
       hlsInstance = new Hls({
         xhrSetup: (xhr) => {
@@ -688,7 +943,11 @@ function playSelectedSource(sourceItem) {
           });
         }
       });
-      hlsInstance.loadSource(withStreamApiBase(sourceItem.url));
+      let hlsUrl = originalUrl;
+      if (/^https?:\/\//i.test(hlsUrl) && !hlsUrl.startsWith('/api/onlinestream/proxy')) {
+        hlsUrl = `/api/onlinestream/proxy?provider=${encodeURIComponent(selectedProvider)}&url=${encodeURIComponent(hlsUrl)}`;
+      }
+      hlsInstance.loadSource(withStreamApiBase(hlsUrl));
       hlsInstance.attachMedia(playerEl);
       hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
         // Re-attach after HLS manifest setup; some browsers ignore early-added tracks.
@@ -716,7 +975,12 @@ function playSelectedSource(sourceItem) {
       return;
     }
   }
-  playerEl.src = withStreamApiBase(sourceItem.url);
+
+  let directUrl = originalUrl;
+  if (/^https?:\/\//i.test(directUrl) && !directUrl.startsWith('/api/onlinestream/proxy')) {
+    directUrl = `/api/onlinestream/proxy?provider=${encodeURIComponent(selectedProvider)}&url=${encodeURIComponent(directUrl)}`;
+  }
+  playerEl.src = withStreamApiBase(directUrl);
   if (plyrInstance) {
     plyrInstance.play().catch(() => { });
   } else {
@@ -1572,6 +1836,7 @@ changeEpisode = async function (num) {
     injectSkipIntroBtn();
     injectSkipOutroBtn();
     document.dispatchEvent(new CustomEvent('anikai:episodeChanged', { detail: { num } }));
+    subscribeCommentsForEpisode(num);
   }, 800);
 };
 
@@ -1591,6 +1856,93 @@ async function initWithFeatures() {
   setTimeout(() => {
     injectWatchRatingRow();
   }, 2000);
+  updateCommentAuthUi();
+  if (firebaseClient?.ready && firebaseClient.authEnabled) {
+    firebaseClient.onAuthStateChanged((user) => {
+      commentUser = user;
+      updateCommentAuthUi();
+    });
+  } else {
+    updateCommentAuthUi();
+  }
+  subscribeCommentsForEpisode(selectedEpisode);
+  syncEpisodeLayoutMode();
+  window.addEventListener('resize', syncEpisodeLayoutMode);
 }
 
 initWithFeatures();
+
+if (commentFormEl && commentInputEl && commentSubmitBtnEl) {
+  commentFormEl.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!firebaseClient?.ready || !firebaseClient.firestoreEnabled) {
+      showToast('Comments are unavailable right now.', 'error');
+      return;
+    }
+    const user = firebaseClient.getCurrentUser?.();
+    if (!user) {
+      showToast('Log in to post a comment.', 'error');
+      updateCommentAuthUi();
+      return;
+    }
+    const rawText = commentInputEl.value.trim();
+    if (!rawText || rawText.length < 2) {
+      showToast('Type a little more to post your comment.', 'info');
+      return;
+    }
+    const text = rawText.slice(0, 600);
+    commentSubmitBtnEl.disabled = true;
+    if (commentFormStatusEl) commentFormStatusEl.textContent = 'Posting...';
+    try {
+      // #region agent log
+      fetch('http://127.0.0.1:7266/ingest/4f728ec4-050e-4223-9dee-e100cb8b6f4b', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Debug-Session-Id': '65dcf7'
+        },
+        body: JSON.stringify({
+          sessionId: '65dcf7',
+          runId: 'pre-fix-1',
+          hypothesisId: 'H3',
+          location: 'watch.js:338',
+          message: 'comment submit',
+          data: {
+            animeId,
+            episode: selectedEpisode,
+            textLength: text.length
+          },
+          timestamp: Date.now()
+        })
+      }).catch(() => { });
+      // #endregion agent log
+      // Optimistic local render for instant feedback.
+      const optimistic = {
+        id: `local-${Date.now()}`,
+        displayName: getCommentDisplayName(user),
+        text,
+        createdAtMs: Date.now()
+      };
+      const optimisticList = [...currentComments, optimistic].sort(
+        (a, b) => (a.createdAtMs || 0) - (b.createdAtMs || 0)
+      );
+      renderComments(optimisticList);
+      await firebaseClient.addComment(animeId, selectedEpisode, {
+        uid: user.uid,
+        displayName: getCommentDisplayName(user),
+        text
+      });
+      commentInputEl.value = '';
+      if (commentFormStatusEl) commentFormStatusEl.textContent = 'Posted';
+      setTimeout(() => {
+        if (commentFormStatusEl) commentFormStatusEl.textContent = '';
+      }, 1200);
+    } catch (error) {
+      console.error('Comment post failed', error);
+      showToast('Could not post comment. Try again.', 'error');
+      if (commentFormStatusEl) commentFormStatusEl.textContent = 'Failed to post';
+    } finally {
+      commentSubmitBtnEl.disabled = false;
+    }
+  });
+}

@@ -8,6 +8,8 @@ const watchListGrid = document.querySelector('#watchListGrid');
 const watchListSection = document.querySelector('#watchListSection');
 const journeySection = document.querySelector('#journeySection');
 const journeyList = document.querySelector('#journeyList');
+const recommendedSection = document.querySelector('#recommendedSection');
+const recommendedGrid = document.querySelector('#recommendedGrid');
 const cardTemplate = document.querySelector('#cardTemplate');
 const listTemplate = document.querySelector('#listTemplate');
 const searchResultTemplate = document.querySelector('#searchResultTemplate');
@@ -60,14 +62,14 @@ const RECENT_SEARCHES_KEY = 'anikai_recent_searches';
 const CATALOG_CACHE_KEY_PREFIX = 'anikai_catalog_cache_';
 const CATALOG_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 const CATALOG_PAGE_SIZE = 24;
-const CATALOG_MAX_PAGES = 80;
+const CATALOG_MAX_PAGES = 40;
 const MAX_LATEST_VISIBLE = 12;
 const MAX_TRENDING_VISIBLE = 24;
 const MAX_LATEST_VISIBLE_MOBILE = 6;
 const MAX_TRENDING_VISIBLE_MOBILE = 14;
 const MAX_TOP_VISIBLE_MOBILE = 0;
-const BACKGROUND_SYNC_START_DELAY_MS = 20000;
-const BACKGROUND_SYNC_IDLE_TIMEOUT_MS = 2000;
+const BACKGROUND_SYNC_START_DELAY_MS = 25000;
+const BACKGROUND_SYNC_IDLE_TIMEOUT_MS = 2500;
 const BACKGROUND_CACHE_WRITE_EVERY_PAGES = 6;
 const FEATURE_BOOT_DELAY_MS = 25000;
 const CAROUSEL_AUTOPLAY_DELAY_MS = 7000;
@@ -78,7 +80,7 @@ let carouselInterval = null;
 let carouselItems = [];
 let carouselIndex = 0;
 let searchAbortController = null;
-let currentUser = readJson(USER_SESSION_KEY, null);
+let currentUser = null;
 let watchList = [];
 let cloudProgressByAnime = new Map();
 let firebaseClient = window.AnikaiFirebase || null;
@@ -93,8 +95,12 @@ let runtimeCatalogPageSize = CATALOG_PAGE_SIZE;
 let hasShownSyncError = false;
 
 function readJson(key, fallback) {
+  const shared = window.AnikaiShared;
+  if (shared && typeof shared.readJson === 'function') {
+    return shared.readJson(key, fallback);
+  }
   try {
-    const raw = localStorage.getItem(key);
+    const raw = window.localStorage.getItem(key);
     if (!raw) return fallback;
     const parsed = JSON.parse(raw);
     return parsed ?? fallback;
@@ -104,10 +110,19 @@ function readJson(key, fallback) {
 }
 
 function writeJson(key, value) {
+  const shared = window.AnikaiShared;
+  if (shared && typeof shared.writeJson === 'function') {
+    shared.writeJson(key, value);
+    return;
+  }
   try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch (_) { }
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch (_) {
+    // Ignore quota / private mode errors.
+  }
 }
+
+currentUser = readJson(USER_SESSION_KEY, null);
 
 function isCompactViewport() {
   return window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
@@ -217,6 +232,7 @@ function initFeaturesIfReady() {
   F.setFullCatalog(catalog);
   if (!featuresBootstrapped) {
     F.initHomeFeatures();
+    seedChangelogNotificationsIfNeeded();
     featuresBootstrapped = true;
   }
 }
@@ -467,6 +483,52 @@ function getJourneyEntries(limit = 20) {
       return { anime, progress };
     })
     .filter(Boolean);
+}
+
+function getRecommendedFromCatalog(maxItems = 12) {
+  if (!Array.isArray(catalog) || catalog.length === 0) return [];
+  const journeyEntries = getJourneyEntries(60);
+  if (!journeyEntries.length) return [];
+
+  const watchedIds = new Set(journeyEntries.map(({ anime }) => String(anime.id)));
+  const genreCounts = new Map();
+
+  journeyEntries.forEach(({ anime }) => {
+    (anime.genres || []).forEach((genre) => {
+      const key = String(genre || '').trim();
+      if (!key) return;
+      genreCounts.set(key, (genreCounts.get(key) || 0) + 1);
+    });
+  });
+
+  const topGenres = Array.from(genreCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([genre]) => genre);
+
+  if (!topGenres.length) return [];
+
+  const candidates = catalog.filter((anime) => {
+    if (!anime || anime.id == null) return false;
+    if (watchedIds.has(String(anime.id))) return false;
+    const genres = Array.isArray(anime.genres) ? anime.genres : [];
+    return genres.some((g) => topGenres.includes(g));
+  });
+
+  if (!candidates.length) return [];
+
+  const scored = candidates.map((anime) => {
+    const scoreValue = Number(anime.score || 0) || 0;
+    const yearValue = Number(anime.year || 0) || 0;
+    return { anime, scoreValue, yearValue };
+  });
+
+  scored.sort((a, b) => {
+    if (b.scoreValue !== a.scoreValue) return b.scoreValue - a.scoreValue;
+    return b.yearValue - a.yearValue;
+  });
+
+  return scored.slice(0, maxItems).map((entry) => entry.anime);
 }
 
 function formatAgo(ts) {
@@ -829,6 +891,7 @@ function renderJourney() {
   if (!entries.length) {
     journeySection.style.display = 'none';
     journeyList.innerHTML = '';
+    if (recommendedSection) recommendedSection.style.display = 'none';
     return;
   }
 
@@ -847,6 +910,19 @@ function renderJourney() {
     `;
   }).join('');
   journeySection.style.display = 'block';
+}
+
+function renderRecommended() {
+  if (!recommendedSection || !recommendedGrid) return;
+  const items = getRecommendedFromCatalog(12);
+  if (!items.length) {
+    recommendedSection.style.display = 'none';
+    recommendedGrid.innerHTML = '';
+    return;
+  }
+  recommendedSection.style.display = 'block';
+  recommendedGrid.innerHTML = '';
+  renderGrid(recommendedGrid, items, false);
 }
 
 // --- Live Search ---
@@ -1175,6 +1251,7 @@ function renderCatalogSections(filtered) {
     loadContinueWatching();
     renderWatchList();
     renderJourney();
+    renderRecommended();
   }
 }
 
@@ -1425,6 +1502,17 @@ async function loadCatalog() {
   }
 }
 
+function seedChangelogNotificationsIfNeeded() {
+  const F = window.AnikaiFeatures;
+  if (!F || !F.Notifications || !F.Store) return;
+  const KEY = 'anikai_changelog_seeded_v1';
+  const seeded = F.Store.get(KEY, false);
+  if (seeded) return;
+  F.Notifications.add('New: Recommended For You section on the home page.', 'info');
+  F.Notifications.add('Security: Hardened stream proxy and subtitle fetching.', 'success');
+  F.Store.set(KEY, true);
+}
+
 async function loadCatalogInBackground(startPage = 2, pageSize = CATALOG_PAGE_SIZE) {
   let pagesSinceCacheWrite = 0;
   for (let page = startPage; page <= CATALOG_MAX_PAGES; page += 1) {
@@ -1442,6 +1530,12 @@ async function loadCatalogInBackground(startPage = 2, pageSize = CATALOG_PAGE_SI
       if (visibleSlotsOpen) {
         appendNewCatalogToSections(added);
       }
+
+      if (catalog.length >= 500) {
+        setCatalogSyncStatus(`Library loaded: ${catalog.length} titles`);
+        break;
+      }
+
       setCatalogSyncStatus(`Syncing library... ${catalog.length} titles`);
       pagesSinceCacheWrite += 1;
       if (pagesSinceCacheWrite >= BACKGROUND_CACHE_WRITE_EVERY_PAGES) {

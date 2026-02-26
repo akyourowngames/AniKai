@@ -1,5 +1,5 @@
 const REQUEST_TIMEOUT_MS = Number(process.env.TATAKAI_TIMEOUT_MS || 20000);
-const BASE_URL = String(process.env.TATAKAI_BASE_URL || 'http://localhost:4000').trim().replace(/\/+$/, '');
+const BASE_URL = String(process.env.TATAKAI_BASE_URL || 'https://anikai-tatakai.onrender.com').trim().replace(/\/+$/, '');
 
 function normalize(text) {
   return String(text || '')
