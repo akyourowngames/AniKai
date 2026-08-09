@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1e1b4b"/>
+      <stop offset="55%" stop-color="#831843"/>
+      <stop offset="100%" stop-color="#db2777"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#f472b6"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="80%" cy="15%" r="75%">
+      <stop offset="0%" stop-color="#f472b6" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#f472b6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="320" fill="url(#bg)"/>
+  <rect width="1200" height="320" fill="url(#glow)"/>
+
+  <!-- sparkles / stars -->
+  <g fill="#fbcfe8" opacity="0.8">
+    <circle cx="960" cy="70" r="3"/>
+    <circle cx="1010" cy="110" r="2"/>
+    <circle cx="1060" cy="64" r="2.5"/>
+    <circle cx="1100" cy="120" r="3"/>
+    <circle cx="930" cy="140" r="2"/>
+  </g>
+  <!-- play/disc motif -->
+  <circle cx="1030" cy="200" r="70" fill="none" stroke="#22d3ee" stroke-opacity="0.25" stroke-width="2"/>
+  <circle cx="1030" cy="200" r="44" fill="#0f172a" fill-opacity="0.5"/>
+  <path d="M1016 178 L1058 200 L1016 222 Z" fill="#f472b6"/>
+
+  <!-- title -->
+  <text x="64" y="124" fill="#f8fafc" font-size="76" font-weight="800" letter-spacing="-1">AniKai</text>
+  <rect x="64" y="144" width="220" height="6" rx="3" fill="url(#accent)"/>
+  <text x="64" y="190" fill="#fbcfe8" font-size="26" font-weight="500">Anime discovery, reimagined</text>
+  <text x="64" y="226" fill="#cbd5e1" font-size="20">Browse shows · Explore details · Track favorites · Modern UI</text>
+
+  <!-- pillars -->
+  <text x="64" y="282" fill="#22d3ee" font-size="19" font-weight="700">🔍 Discover</text>
+  <text x="244" y="282" fill="#f472b6" font-size="19" font-weight="700">📺 Details</text>
+  <text x="424" y="282" fill="#fbbf24" font-size="19" font-weight="700">⭐ Favorites</text>
+</svg>
