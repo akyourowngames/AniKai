@@ -1,77 +1,136 @@
-# AniKai
+<div align="center">
 
-![GitHub last commit](https://img.shields.io/github/last-commit/akyourowngames/=flat-square)
-![GitHub repo size](https://img.shields.io/github/repo-size/akyourowngames/=flat-square)
-![GitHub stars](https://img.shields.io/github/stars/akyourowngames/=flat-square)
-![Built with TypeScript](https://img.shields.io/badge/built%20with-TypeScript-111827?style=flat-square)
+<p>
+  <img src="ankai-banner.svg" alt="AniKai — anime discovery, reimagined" width="100%" />
+</p>
 
-> A modern anime discovery web app for browsing shows, details, and favorites.
+### Anime discovery, reimagined — browse shows, explore details, and track favorites in a modern UI
 
-## Overview
+**Discover. Details. Favorites. — your clean anime companion, live on the web.**
 
-AniKai is designed as a clean anime discovery experience. It gives the project a focused portfolio identity around search, browsing, details, and a modern entertainment-style UI.
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-ani--kai.vercel.app-6E40C9?style=for-the-badge&logo=vercel&logoColor=white)](https://ani-kai.vercel.app)
+[![Last Commit](https://img.shields.io/github/last-commit/akyourowngames/AniKai?style=flat-square)](https://github.com/akyourowngames/AniKai/commits/master)
+[![Stars](https://img.shields.io/github/stars/akyourowngames/AniKai?style=social)](https://github.com/akyourowngames/AniKai/stargazers)
+[![License](https://img.shields.io/github/license/akyourowngames/AniKai?style=flat-square)](#)
+[![Built with TypeScript](https://img.shields.io/badge/built%20with-TypeScript-111827?style=flat-square&logo=typescript&logoColor=white)](#)
+[![Powered by Next.js](https://img.shields.io/badge/Powered%20by-Next.js-black?style=flat-square&logo=next.js&logoColor=white)](#)
 
-## Live Demo
+<p>
+  <a href="#-live-demo">Live Demo</a> ·
+  <a href="#-highlights">Highlights</a> ·
+  <a href="#-tech-stack">Tech Stack</a> ·
+  <a href="#-quick-start">Quick Start</a> ·
+  <a href="#-support">Support</a>
+</p>
 
-[https://ani-kai.vercel.app](https://ani-kai.vercel.app)
+</div>
 
-## Highlights
+---
 
-- Anime discovery and browsing positioning
-- Modern frontend interface
-- Live Vercel deployment
-- Clear product niche for anime fans
-- Good base for favorites, tracking, and detail pages
+## 🔍 Why AniKai?
 
-## Built For
+> **A focused, modern anime discovery experience.** No clutter — just search, browse, dive into details, and keep a list of what you love.
 
-- Anime discovery experiments
-- Frontend portfolio work
-- Entertainment UI practice
-- API-driven web apps
+AniKai is built as a clean entertainment-style web app with a sharp portfolio identity: discovery first, details second, favorites always.
 
-## Tech Stack
+**The three pillars:**
 
-- TypeScript or JavaScript
-- React / Next.js style frontend
-- Vercel deployment
-- Anime data/API integration
+- 🔍 **Discover** — fast anime search and browsing with a focused niche for fans.
+- 📺 **Details** — rich show pages with metadata, relations, and exploration.
+- ⭐ **Favorites** — track the shows you care about in a personal list.
 
-## Quick Start
+---
 
-```powershell
+## 🚀 Live Demo
+
+Try it now: **[ani-kai.vercel.app](https://ani-kai.vercel.app)**
+
+<p align="center">
+  <img src="ankai_demo.png" alt="AniKai live demo screenshot" width="85%" />
+</p>
+<p align="center"><sub>Live capture of the deployed AniKai app on Vercel.</sub></p>
+
+---
+
+## ⚡ Highlights
+
+| | | |
+|---|---|---|
+| 🔎 **Anime discovery** | 📖 **Detail pages** | 💾 **Favorites & tracking** |
+| Search and browse with a clean, fan-focused UX. | Explore shows, metadata, and related titles. | Keep a personal list of what you love. |
+| 🎨 **Modern UI** | ⚡ **Vercel deployment** | 🧩 **API-driven** |
+| Entertainment-style frontend built for speed. | Always-on production build, auto-deployed. | Powered by an anime data API integration. |
+| 🧭 **Clear niche** | 🛠️ **Portfolio-grade** | 🚀 **Extensible** |
+| Positioned for anime fans, not generic catalogs. | Great showcase of frontend + API work. | Solid base for watchlists and more. |
+
+---
+
+## 🧱 Tech Stack
+
+- **Language:** TypeScript / JavaScript
+- **Frontend:** React / Next.js (App Router style)
+- **Hosting:** Vercel (auto-deploy from `master`)
+- **Data:** Anime data/API integration
+
+---
+
+## 🏁 Quick Start
+
+```bash
 git clone https://github.com/akyourowngames/AniKai.git
 cd AniKai
 npm install
 ```
 
-## Run Locally
-
-```powershell
+```bash
 npm run dev
-Open http://localhost:3000
+# open http://localhost:3000
 ```
 
-## Project Structure
+Deploy in one click with Vercel, or import the repo and set the root as the build source.
 
-```text
-src/ or app/  application source
-public/       static assets
-package.json  scripts and dependencies
-README.md     project documentation
-```
+---
 
-## Roadmap
+## 🗺️ Roadmap
 
-- Add screenshots of search and detail pages
-- Document data source and API requirements
-- Add loading, empty, and error state notes
-- Add favorites or watchlist roadmap
+- [ ] Screenshots of search and detail pages (in progress — see above!)
+- [ ] Document data source and API requirements
+- [ ] Loading, empty, and error state notes
+- [ ] Favorites / watchlist persistence
 
-## Contributing
+---
 
-Contributions, ideas, and polish suggestions are welcome. Open an issue with a clear problem statement or create a focused pull request.
+## 🤝 Contributing
 
-## Author
+Contributions, ideas, and polish suggestions are welcome. Open an issue with a clear problem statement or a focused pull request.
 
-Built by [Krish](https://github.com/akyourowngames). If this project helped you or sparked an idea, consider starring the repo.
+---
+
+## 📈 Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=akyourowngames/AniKai&type=Date)](https://www.star-history.com/#akyourowngames/AniKai&Date)
+
+If AniKai is useful or just looks cool, a ⭐ helps others find it.
+
+---
+
+## 💬 Support
+
+- **Bug or idea?** [Open an issue](https://github.com/akyourowngames/AniKai/issues).
+- **Questions?** Reach out via the profile README.
+
+> Built by [@akyourowngames](https://github.com/akyourowngames). If this sparked an idea, consider starring the repo. 🌸
+
+---
+
+## 🔗 More from the same author
+
+- [friday](https://github.com/akyourowngames/friday) — local-first AI assistant (graph memory, semantic routing, FastAPI/Next.js).
+- [A.N.K.I.T.A](https://github.com/akyourowngames/A.N.K.I.T.A) — Python personal AI assistant with voice, memory, Telegram.
+- [echo89](https://github.com/akyourowngames/echo89) — local-first cinematic music player.
+
+---
+
+## License
+
+See repository for license details.
